@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ onLogin, navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -9,7 +9,7 @@ export default function LoginScreen({ onLogin }) {
     <View style={styles.container}>
       <View style={styles.logoContainer}>
         <Image 
-          source={require('../assets/logo.jpg')} 
+          source={require('../assets/logo.png')} 
           style={styles.logo}
           resizeMode="contain"
         />
@@ -36,8 +36,8 @@ export default function LoginScreen({ onLogin }) {
       
       <TouchableOpacity 
         style={styles.loginButton} 
-        onPress={onLogin}
         activeOpacity={0.8}
+        onPress={() => onLogin(email, password)}
       >
         <Text style={styles.loginButtonText}>Log In</Text>
       </TouchableOpacity>
@@ -45,7 +45,12 @@ export default function LoginScreen({ onLogin }) {
       <TouchableOpacity style={styles.forgotPasswordContainer}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
-    </View>
+
+      <TouchableOpacity style={styles.signupContainer}
+        onPress={() => navigation.navigate('SignUp')}>
+        <Text style={styles.signupText}>Don’t have an account? Sign Up</Text>
+      </TouchableOpacity>
+    </View>      
   );
 }
 
@@ -98,6 +103,14 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     color: '#666',
+    fontSize: 14,
+  },
+  signupContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  signupText: {
+    color: '#007AFF',
     fontSize: 14,
   },
 });
