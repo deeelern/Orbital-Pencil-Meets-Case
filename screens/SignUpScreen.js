@@ -36,7 +36,7 @@ export default function SignUpScreen({ navigation }) {
       });
 
       // 3) Go to Home (replace so you can’t go back)
-      navigation.replace('Home');
+      navigation.replace('ProfileSetup');
     } catch (err) {
       Alert.alert('Sign Up Failed', err.message);
     }
