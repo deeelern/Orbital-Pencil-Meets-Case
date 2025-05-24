@@ -1,5 +1,5 @@
 // ./screens/ProfileSetupScreen.js
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,259 +7,406 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
-  ActivityIndicator,
-  Platform
+  Platform,
 } from 'react-native';
-
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
-
+import { Alert } from 'react-native';
 import { auth, db } from '../FirebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
+// Radio button component
+function Radio({ label, selected, onPress }) {
+  return (
+    <TouchableOpacity style={styles.radioRow} onPress={onPress}>
+      <Text style={styles.radioLabel}>{label}</Text>
+      <View style={[styles.radioOuter, selected && styles.radioOuterSel]}>
+        {selected && <View style={styles.radioInner} />}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export default function ProfileSetupScreen({ navigation }) {
-  const user = auth.currentUser;
-  const uid  = user?.uid;
+  // 1) Who you want to date?
+  const [datePref, setDatePref] = useState(null);
 
-  // --- form state ---
-  const [gender, setGender] = useState('');             // e.g. "Male", "Female", "Non-binary"
-  const [dob, setDob]       = useState(new Date());
-  const [showPicker, setShowPicker] = useState(false);  // enter as "YYYY-MM-DD"
-
-  const [prefGenders, setPrefGenders] = useState('');   // comma-separated list
-  const [minAge, setMinAge] = useState(18);             // min 18
-  const [maxAge, setMaxAge] = useState(30);             // max 30
-  const [loading, setLoading] = useState(false);
-
-  const togglePref = option => {
-    setPrefGenders(arr =>
-      arr.includes(option)
-        ? arr.filter(g => g !== option)
-        : [...arr, option]
-    );
+  // 2) Birthday
+  const [dob, setDob] = useState(new Date());
+  const [showDobPicker, setShowDobPicker] = useState(false);
+  const onDobChange = (e, d) => {
+    setShowDobPicker(Platform.OS === 'ios');
+    if (d) setDob(d);
   };
-  
-  const onChangeDob = (event, selectedDate) => {
-    setShowPicker(Platform.OS === 'ios');
-    if  (selectedDate) {
-        setDob(selectedDate);
-    }
-  };
-
-  const checkIs18 = date => {
+  const checkIs18 = d => {
     const today = new Date();
-    let age = today.getFullYear() - date.getFullYear();
-    const m = today.getMonth() - date.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
-        age--;
-    }
+    let age = today.getFullYear() - d.getFullYear();
+    const m = today.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
     return age >= 18;
   };
 
-  const handleSubmit = async () => {
-    if (!gender) {
-        return Alert.alert('Please select your gender');
+  // 3) Name
+  const [firstName, setFirstName] = useState('');
+  const [lastName,  setLastName]  = useState('');
+
+  // 4) Your gender
+  const [myGender, setMyGender] = useState(null);
+  const [showMoreGenders, setShowMoreGenders] = useState(false);
+
+  // 5) Highest degree
+  const degrees = ['Bachelors','Masters','MBA','PhD','MD','EdD',
+    'Diploma', 'Post-Tertiary', 'Higher Nitec', 'Nitec', 'Post-Secondary'
+  ];
+  const [degree, setDegree] = useState(null);
+
+  // 6) School
+  const [school, setSchool] = useState('');
+
+  // 7) Job title
+  const [jobTitle, setJobTitle] = useState('');
+
+  // 8) Height in cm
+  const heightRange = Array.from({ length: 300 }, (_, i) => 0 + i); // 140–220 cm
+  const [heightCm, setHeightCm] = useState(160);
+
+  // 9) Ethnicity (single for now)
+  const ethnicities = [
+    'Asian','East Asian','South Asian','Southeast Asian',
+    'Black/African','Hispanic/Latino','Middle Eastern','Indigenous'
+  ];
+  const [ethnicity, setEthnicity] = useState(null);
+  const [otherEthnicity, setOtherEthnicity] = useState('');
+
+  // 10) Religion
+  const religions = ['Buddhist','Christian','Catholic','Hindu','Jewish','Muslim','Sikh','Shinto','Other'];
+  const [religion, setReligion] = useState(null);
+  const [otherReligion, setOtherReligion] = useState('');
+
+  // finally “Done”
+  const handleDone = async () => {
+    // validate and write to Firestore here...
+    if (!datePref) {
+      return Alert.alert('Missing field', 'Please choose who you want to date.');
+    }
+    if (!firstName.trim() || !lastName.trim()) {
+      return Alert.alert('Missing name', 'Please enter both your first and last name.');
+    }
+    if (!myGender) {
+      return Alert.alert('Missing gender', 'Please select your gender.');
+    }
+    if (!degree) {
+      return Alert.alert('Missing degree', 'Please select your highest degree.');
+    }
+    if (!school.trim()) {
+      return Alert.alert('Missing school', 'Please enter where you studied.');
+    }
+    if (!jobTitle.trim()) {
+      return Alert.alert('Missing job title', 'Please enter your job title.');
+    }
+    if (!heightCm) {
+      return Alert.alert('Missing Height', 'Please select your height.');
+    }
+    if (!ethnicity) {
+      return Alert.alert('Missing ethnicity', 'Please select your ethnicity.');
     }
     if (!checkIs18(dob)) {
-        return Alert.alert('You must be at least 18 years old!')
+      return Alert.alert('Too young', 'You must be at least 18 years old to join!');
     }
-    if (prefGenders.length === 0) {
-      return Alert.alert('Select at least one preferred gender!');
-    }
-    if (minAge > maxAge) {
-        return Alert.alert('Minimum Age cannot be greater than Maximum Age!');
-    }
-    if (!uid) {
-      return Alert.alert('Not signed in');
+    if (!religion) {
+      return Alert.alert('Missing religion', 'Please select your religion.');
     }
 
-    setLoading(true);
-    try {
-      const preferences = {
-        preferredGenders: prefGenders,
-        ageRange: {
-          min: minAge,
-          max: maxAge
-        }
-      };
+    const payload = {
+      datePref,
+      dateOfBirth: dob,
+      firstName,
+      lastName,
+      gender: myGender,
+      degree,
+      school,
+      jobTitle,
+      heightCm,
+      ethnicity: otherEthnicity || ethnicity,
+      religion: religion === 'Other' ? otherReligion : religion,
+      profileSetupAt: serverTimestamp(),
+    };
 
-      // write into Firestore under /users/{uid}
-      await setDoc(
-        doc(db, 'users', uid),
-        {
-          gender,
-          dateOfBirth: dob,
-          preferences,
-          profileSetupAt: serverTimestamp()
-        },
-        { merge: true }      // keep any existing fields (like email)
-      );
-
-      // navigate to your main app
-      navigation.replace('Home');
-    } catch (err) {
-      Alert.alert('Error saving profile', err.message);
-    } finally {
-      setLoading(false);
-    }
+     try {
+       // get the user id
+       const user = auth.currentUser;
+       if (!user) throw new Error('Not signed in');
+       const uid = user.uid;
+  
+       // write (merge) into /users/{uid}
+       await setDoc(
+         doc(db, 'users', uid),
+         payload,
+         { merge: true }
+        );
+ 
+       console.log('Profile saved:', payload);
+       // move on to Part 2
+       navigation.replace('ProfileSetUpPart2');
+     } catch (err) {
+       console.error(err);
+       Alert.alert('Error saving profile', err.message);
+     }
   };
 
-  const ages = Array.from({ length: 82 }, (_, i) => 18 + i);
-
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>Tell us about yourself</Text>
+    <ScrollView style={styles.screen}>
+      <View style={styles.container}>
 
-       <View style={styles.row}>
-        {['Male','Female'].map(option => (
-          <TouchableOpacity
-            key={option}
-            style={[
-              styles.genderButton,
-              gender === option && styles.genderButtonSelected
-            ]}
-            onPress={() => setGender(option)}
-          >
-            <Text
-              style={[
-                styles.genderText,
-                gender === option && styles.genderTextSelected
-              ]}
-            >
-              {option}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <TouchableOpacity
-        style={styles.dateInput}
-        onPress={() => setShowPicker(true)}
-      >
-        <Text style={styles.dateText}>
-          {dob.toISOString().slice(0,10)}  {/* YYYY-MM-DD */}
-        </Text>
-      </TouchableOpacity>
-      {showPicker && (
-        <DateTimePicker
-          value={dob}
-          mode="date"
-          display="spinner"
-          maximumDate={new Date()}      // no future dates
-          onChange={onChangeDob}
-          style={styles.picker}
-        />
-      )}
-
-      <Text style={styles.sectionTitle}>Your Preferences</Text>
-
-<Text style={styles.sectionTitle}>Preferred Genders</Text>
-      <View style={styles.row}>
-        {['Male','Female'].map(opt => (
-          <TouchableOpacity
+        {/* 1) Who do you want to date? */}
+        <Text style={styles.h1}>Who do you want to date?</Text>
+        {['Women','Men','Everyone'].map(opt => (
+          <Radio
             key={opt}
-            style={[
-              styles.genderButton,
-              prefGenders.includes(opt) && styles.genderButtonSelected
-            ]}
-            onPress={() => togglePref(opt)}
-          >
-            <Text
-              style={[
-                styles.genderText,
-                prefGenders.includes(opt) && styles.genderTextSelected
-              ]}
-            >
-              {opt}
-            </Text>
-          </TouchableOpacity>
+            label={opt}
+            selected={datePref===opt}
+            onPress={()=>setDatePref(opt)}
+          />
         ))}
-      </View>
 
-      <Text style={styles.sectionTitle}>Age Range</Text>
-      <View style={styles.pickerRow}>
+        {/* 2) Birthday */}
+        <Text style={styles.h1}>Right on. When’s your birthday?</Text>
+        <Text style={styles.sub}>
+          Your birthday is our secret—only your age appears on your profile.
+        </Text>
+        <TouchableOpacity
+          style={styles.dateBtn}
+          onPress={()=>setShowDobPicker(true)}
+        >
+          <Text style={styles.dateText}>
+            {dob.toLocaleDateString()}
+          </Text>
+        </TouchableOpacity>
+        {showDobPicker && (
+          <DateTimePicker
+            value={dob}
+            mode="date"
+            display="spinner"
+            maximumDate={new Date()}
+            onChange={onDobChange}
+            style={styles.picker}
+          />
+        )}
+
+        {/* 3) Name */}
+        <Text style={styles.h1}>You can call us PMC—what’s your name?</Text>
+        <Text style={styles.sub}>
+          Only first names get shared with matches & you can’t change it later.
+        </Text>
+        <TextInput
+          placeholder="First name"
+          style={styles.input}
+          value={firstName}
+          onChangeText={setFirstName}
+        />
+        <TextInput
+          placeholder="Last name"
+          style={styles.input}
+          value={lastName}
+          onChangeText={setLastName}
+        />
+
+        {/* 4) Your gender */}
+        <Text style={styles.h1}>What’s your gender?</Text>
+        <Text style={styles.sub}>
+          Your gender stays hidden and can’t be changed later.
+        </Text>
+        {['Woman','Man'].map(opt=>(
+          <Radio
+            key={opt}
+            label={opt}
+            selected={myGender===opt}
+            onPress={()=>setMyGender(opt)}
+          />
+        ))}
+        <TouchableOpacity
+          onPress={()=>setShowMoreGenders(!showMoreGenders)}
+        >
+          <Text style={styles.link}>
+            {showMoreGenders ? 'Hide extra options' : 'Show me more'}
+          </Text>
+        </TouchableOpacity>
+        {showMoreGenders && (
+          <Text style={styles.sub}>…extra gender fields here…</Text>
+        )}
+
+        {/* 5) Highest degree */}
+        <Text style={styles.h1}>What’s the highest degree you’ve earned?</Text>
+        <Text style={styles.sub}>
+          Add your degree to get seen by matches who filter by education.
+        </Text>
+        {degrees.map(d => (
+          <Radio
+            key={d}
+            label={d}
+            selected={degree===d}
+            onPress={()=>setDegree(d)}
+          />
+        ))}
+
+        {/* 6) Where did you study? */}
+        <Text style={styles.h1}>Where did you study?</Text>
+        <TextInput
+          placeholder="e.g. National University of Singapore"
+          style={styles.input}
+          value={school}
+          onChangeText={setSchool}
+        />
+
+        {/* 7) What’s your job title? */}
+        <Text style={styles.h1}>What’s your job title?</Text>
+        <TextInput
+          placeholder="e.g. Student, Software Engineer"
+          style={styles.input}
+          value={jobTitle}
+          onChangeText={setJobTitle}
+        />
+
+        {/* 8) Height (cm) */}
+        <Text style={styles.h1}>Almost there! Mind sharing your height?</Text>
+        <Text style={styles.sub}>
+          Height helps us suggest the best matches.
+        </Text>
+        <View style={styles.pickerRow}>
         <Picker
           style={styles.agePicker}
-          selectedValue={minAge}
-          onValueChange={v => setMinAge(v)}
+          selectedValue={heightCm}
+          onValueChange={v => setHeightCm(v)}
         >
-          {ages.map(a => (
-            <Picker.Item key={a} label={`${a}`} value={a} />
-          ))}
-        </Picker>
-        <Picker
-          style={styles.agePicker}
-          selectedValue={maxAge}
-          onValueChange={v => setMaxAge(v)}
-        >
-          {ages.map(a => (
-            <Picker.Item key={a} label={`${a}`} value={a} />
-          ))}
-        </Picker>
-      </View>
+        {heightRange.map(cm => (
+         <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
+            ))}
+          </Picker>
+        </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.buttonText}>Save Profile</Text>
-        }
-      </TouchableOpacity>
+        {/* 9) Ethnicity */}
+        <Text style={styles.h1}>What’s your ethnicity?</Text>
+        <Text style={styles.sub}>
+          This controls how you show up in filtered results. Check all that apply.
+        </Text>
+        {ethnicities.map(e=>(
+          <Radio
+            key={e}
+            label={e}
+            selected={ethnicity===e}
+            onPress={()=>setEthnicity(e)}
+          />
+        ))}
+        <TextInput
+          placeholder="Other (e.g. Punjabi, Pasifika)"
+          style={styles.input}
+          value={otherEthnicity}
+          onChangeText={setOtherEthnicity}
+        />
+
+        {/* 10) Religion */}
+        <Text style={styles.h1}>What’s your religion?</Text>
+        {religions.map(r=>(
+          <Radio
+            key={r}
+            label={r}
+            selected={religion===r}
+            onPress={()=>setReligion(r)}
+          />
+        ))}
+        {religion === 'Other' && (
+          <TextInput
+            placeholder="Please specify"
+            style={styles.input}
+            value={otherReligion}
+            onChangeText={setOtherReligion}
+          />
+        )}
+
+        {/* Next */}
+        <TouchableOpacity
+          style={styles.submitBtn}
+          onPress={handleDone}
+        >
+          <Text style={styles.submitText}>Next</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container:     { padding: 20, paddingBottom: 40 },
-  heading:       { fontSize: 24, fontWeight: 'bold', marginBottom: 24, textAlign: 'center' },
-  row:           { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16 },
-  genderButton:  {
-    flex: 1,
-    marginHorizontal: 8,
-    paddingVertical: 12,
+  screen: { flex: 1, backgroundColor: '#fff' },
+  container: { padding: 20, paddingBottom: 40 },
+
+  h1:  { fontSize: 20, fontWeight: '600', marginTop: 24, marginBottom: 8 },
+  sub: { fontSize: 14, color: '#555', marginBottom: 12 },
+
+  // text inputs
+  input: {
+    height: 48,
     borderWidth: 1,
-    borderColor: '#888',
+    borderColor: '#CCC',
     borderRadius: 8,
-    alignItems: 'center'
+    paddingHorizontal: 12,
+    fontSize: 16,
+    marginBottom: 16
   },
-  genderButtonSelected: { backgroundColor: '#000', borderColor: '#000' },
-  genderText:          { fontSize: 16, color: '#000' },
-  genderTextSelected:  { color: '#fff' },
 
-  dateInput:  {
-    height: 50, borderWidth: 1, borderColor: '#888',
-    borderRadius: 8, justifyContent: 'center',
-    paddingHorizontal: 12, marginBottom: 16
-  },
-  dateText:   { fontSize: 16, color: '#000' },
-  picker:     { backgroundColor: '#fff', marginBottom: 16, height: 150 },
-
-  sectionTitle:      { fontSize: 18, fontWeight: '600', marginTop: 24, marginBottom: 8 },
-
-  pickerRow: {
+  // radio rows
+  radioRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#EEE'
   },
-  agePicker: {
-    flex: 1,
-    height: 150,
-    marginHorizontal: 4
+  radioLabel: { fontSize: 16, color: '#333' },
+  radioOuter: {
+    width: 20, height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#CCC'
+  },
+  radioOuterSel: {
+    borderColor: '#0066FF'
+  },
+  radioInner: {
+    backgroundColor: '#0066FF',
+    width: 12, height: 12,
+    borderRadius: 6,
+    position: 'absolute', top: 3, left: 3
   },
 
-  input: {
-    height: 50, borderColor: '#ccc', borderWidth: 1,
-    borderRadius: 8, paddingHorizontal: 12, fontSize: 16,
+  // date picker btn
+  dateBtn: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#CCC',
+    borderRadius: 8,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
     marginBottom: 16
   },
-  button: {
-    backgroundColor: '#000', height: 50,
-    borderRadius: 8, justifyContent: 'center',
-    alignItems: 'center', marginTop: 16
+  dateText: { fontSize: 16, color: '#333' },
+  picker:   { width: '100%', height: 150, marginBottom: 16 },
+
+  // dual picker row
+  pickerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  agePicker: { flex: 1, height: 150, marginHorizontal: 4 },
+
+  // link-style text
+  link: { color: '#0066FF', fontSize: 15, marginVertical: 8, textAlign: 'right' },
+
+  // submit
+  submitBtn: {
+    backgroundColor: '#0066FF',
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 32
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
+  submitText: { color: '#FFF', fontSize: 16, fontWeight: '600' }
 });
