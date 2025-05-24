@@ -13,6 +13,8 @@ import LoginScreen   from './screens/LoginScreen';
 import HomeScreen    from './screens/HomeScreen';
 import SignUpScreen  from './screens/SignUpScreen';
 import ProfileSetupScreen from './screens/ProfileSetUpScreen';
+import ProfileSetUpPart2Screen from './screens/ProfileSetUpPart2Screen';
+import MyPreferencesScreen from './screens/MyPreferencesScreen';
 import ChatScreen    from './screens/ChatScreen';
 import MapScreen     from './screens/MapScreen';
 import MeScreen      from './screens/MeScreen';
@@ -73,6 +75,8 @@ export default function App() {
         <Stack.Screen name="Home"   component={HomeScreen}  />
         <Stack.Screen name="SignUp" component={SignUpScreen}/>
         <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+        <Stack.Screen name="ProfileSetUpPart2" component={ProfileSetUpPart2Screen} />
+        <Stack.Screen name="MyPreferences" component={MyPreferencesScreen} />
         <Stack.Screen name="Chat"   component={ChatScreen}  />
         <Stack.Screen name="Meet"   component={MapScreen}   />
         <Stack.Screen name="Me"     component={MeScreen}    />
