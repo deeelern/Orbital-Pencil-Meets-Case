@@ -77,44 +77,49 @@ export default function MyPreferencesScreen({ navigation }) {
 
   // save & navigate home
   const handleDone = async () => {
-    if (!uid) {
-      Alert.alert('Not signed in', 'Please log in again.');
-      return;
-    }
-    if (ageMin > ageMax) {
-      Alert.alert('Invalid age range', 'Min age cannot exceed Max age.');
-      return;
-    }
-    if (heightMin > heightMax) {
-      Alert.alert('Invalid height range', 'Min height cannot exceed Max height.');
-      return;
-    }
-    const prefsPayload = {
-      gender,
-      ageRange: { min: ageMin, max: ageMax },
-      distanceKm: distance,
-      ethnicity,
-      religion,
-      goals,
-      heightRange:   { min: heightMin, max: heightMax }, // cm
-      educationLevel: education,                         // this and above
-      smoking,
-      drinking,
-      updatedAt: serverTimestamp()
-    };
+  if (!uid) {
+    Alert.alert('Not signed in', 'Please log in again.');
+    return;
+  }
+  if (ageMin > ageMax) {
+    Alert.alert('Invalid age range', 'Min age cannot exceed Max age.');
+    return;
+  }
+  if (heightMin > heightMax) {
+    Alert.alert('Invalid height range', 'Min height cannot exceed Max height.');
+    return;
+  }
 
-    try {
-      await setDoc(
-        doc(db, 'users', uid),
-        { preferences: prefsPayload },
-        { merge: true }
-      );
-      // replace the stack so Home is the new root
-      navigation.replace('Home');
-    } catch (err) {
-      Alert.alert('Error saving preferences', err.message);
-    }
+  const prefsPayload = {
+    gender,
+    ageRange: { min: ageMin, max: ageMax },
+    distanceKm: distance,
+    ethnicity,
+    religion,
+    goals,
+    heightRange: { min: heightMin, max: heightMax },
+    educationLevel: education,
+    smoking,
+    drinking,
+    updatedAt: serverTimestamp()
   };
+
+  try {
+    await setDoc(
+      doc(db, 'users', uid),
+      { preferences: prefsPayload },
+      { merge: true }
+    );
+
+    if (navigation.canGoBack() && navigation.getState().routes.some(r => r.params?.fromMeScreen)) {
+      navigation.goBack(); // ✅ return to MeScreen
+    } else {
+      navigation.replace('Home'); // default fallback
+    }
+  } catch (err) {
+    Alert.alert('Error saving preferences', err.message);
+  }
+};
 
   return (
     <ScrollView style={styles.container}>
