@@ -1,4 +1,3 @@
-// ./screens/MeScreen.js
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -15,9 +14,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { auth, db } from '../FirebaseConfig';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import firebase from 'firebase/compat/app';
-import { UPLOAD_PRESET } from '../CloudinaryConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 const PHOTO_WIDTH = (width - 40) / 3;
@@ -25,9 +22,6 @@ const PHOTO_WIDTH = (width - 40) / 3;
 export default function MeScreen({ navigation }) {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [editingPhotos, setEditingPhotos] = useState(false);
-  const [editPhotos, setEditPhotos] = useState([]);
-  const [uploading, setUploading] = useState(false);
   const user = auth.currentUser;
 
   useEffect(() => {
@@ -44,8 +38,7 @@ export default function MeScreen({ navigation }) {
       const docRef = doc(db, 'users', user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        setUserProfile(data);
+        setUserProfile(docSnap.data());
       } else {
         Alert.alert('Profile not found', 'Please complete your profile setup.');
       }
@@ -71,26 +64,21 @@ export default function MeScreen({ navigation }) {
   const handleEditProfile = () => {
     if (!userProfile) return;
     navigation.navigate('ProfileSetup', {
-      firstName: userProfile.firstName,
-      lastName: userProfile.lastName,
-      heightCm: userProfile.heightCm,
-      jobTitle: userProfile.jobTitle,
-      school: userProfile.school,
-      degree: userProfile.degree,
-      religion: userProfile.religion,
-      ethnicity: userProfile.ethnicity,
-      datePref: userProfile.datePref,
-      dateOfBirth: userProfile.dateOfBirth,
-      gender: userProfile.gender,
-      prompts: userProfile.prompts,
-      fromEditProfile: true
+      ...userProfile,
+      editingMode: true,
+      fromMeScreen: true
     });
   };
 
   const handleEditPictures = () => {
     navigation.navigate('PhotoUpload', {
-      existingPhotos: userProfile.photos || []
+      existingPhotos: userProfile.photos || [],
+      from: 'MeScreen' 
     });
+  };
+
+  const handleEditPreferences = () => {
+    navigation.navigate('MyPreferences', { fromMeScreen: true });
   };
 
   const handleBack = () => navigation.goBack();
@@ -159,9 +147,15 @@ export default function MeScreen({ navigation }) {
         <View style={styles.infoSection}>
           <Text style={styles.name}>{userProfile.firstName} {userProfile.lastName}</Text>
           {age && <Text style={styles.age}>{age} years old</Text>}
+
           <TouchableOpacity onPress={handleEditProfile} style={styles.editProfileButton}>
             <Ionicons name="pencil-outline" size={16} color="#0066FF" />
             <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleEditPreferences} style={styles.editProfileButton}>
+            <Ionicons name="options-outline" size={16} color="#0066FF" />
+            <Text style={styles.editProfileButtonText}>Edit Preferences</Text>
           </TouchableOpacity>
         </View>
 
