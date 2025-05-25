@@ -72,7 +72,7 @@ export default function ProfileSetUpPart2Screen({ navigation, route }) {
         },
         { merge: true }
       );
-      if (route?.params?.fromEditProfile) {
+      if (route?.params?.fromMeScreen) {
         navigation.replace('Me');
       } else {
         navigation.replace('PhotoUpload');
