@@ -5,19 +5,21 @@ import { StyleSheet, View, Image, Animated, Alert } from 'react-native';
 
 import { NavigationContainer }             from '@react-navigation/native';
 import { createNativeStackNavigator }      from '@react-navigation/native-stack';
+import { GestureHandlerRootView }          from 'react-native-gesture-handler';
 
 import { auth }                            from "./FirebaseConfig";
 import { signInWithEmailAndPassword }      from 'firebase/auth';
 
-import LoginScreen   from './screens/LoginScreen';
-import HomeScreen    from './screens/HomeScreen';
-import SignUpScreen  from './screens/SignUpScreen';
-import ProfileSetupScreen from './screens/ProfileSetUpScreen';
+import LoginScreen             from './screens/LoginScreen';
+import HomeScreen              from './screens/HomeScreen';
+import SignUpScreen            from './screens/SignUpScreen';
+import ProfileSetupScreen      from './screens/ProfileSetUpScreen';
 import ProfileSetUpPart2Screen from './screens/ProfileSetUpPart2Screen';
-import MyPreferencesScreen from './screens/MyPreferencesScreen';
-import ChatScreen    from './screens/ChatScreen';
-import MapScreen     from './screens/MapScreen';
-import MeScreen      from './screens/MeScreen';
+import PhotoUploadScreen       from './screens/PhotoUploadScreen';
+import MyPreferencesScreen     from './screens/MyPreferencesScreen';
+import ChatScreen              from './screens/ChatScreen';
+import MapScreen               from './screens/MapScreen';
+import MeScreen                from './screens/MeScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -61,28 +63,30 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login">
-          {props => (
-            <LoginScreen
-              onLogin={(e,p) => handleLogin(e, p, props.navigation)}
-              navigation={props.navigation}
-            />
-          )}
-        </Stack.Screen>
-
-        <Stack.Screen name="Home"   component={HomeScreen}  />
-        <Stack.Screen name="SignUp" component={SignUpScreen}/>
-        <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
-        <Stack.Screen name="ProfileSetUpPart2" component={ProfileSetUpPart2Screen} />
-        <Stack.Screen name="MyPreferences" component={MyPreferencesScreen} />
-        <Stack.Screen name="Chat"   component={ChatScreen}  />
-        <Stack.Screen name="Meet"   component={MapScreen}   />
-        <Stack.Screen name="Me"     component={MeScreen}    />
-      </Stack.Navigator>
-      <StatusBar style="auto" />
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Login">
+            {props => (
+              <LoginScreen
+                onLogin={(e, p) => handleLogin(e, p, props.navigation)}
+                navigation={props.navigation}
+              />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="SignUp" component={SignUpScreen} />
+          <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+          <Stack.Screen name="ProfileSetUpPart2" component={ProfileSetUpPart2Screen} />
+          <Stack.Screen name="PhotoUpload" component={PhotoUploadScreen} />
+          <Stack.Screen name="MyPreferences" component={MyPreferencesScreen} />
+          <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="Meet" component={MapScreen} />
+          <Stack.Screen name="Me" component={MeScreen} />
+        </Stack.Navigator>
+        <StatusBar style="auto" />
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }
 
@@ -98,3 +102,4 @@ const styles = StyleSheet.create({
     height: 200
   },
 });
+

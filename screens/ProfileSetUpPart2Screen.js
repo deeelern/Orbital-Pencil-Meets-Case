@@ -25,17 +25,20 @@ const PROMPTS = [
   'What’s the most important traits in a partner?'
 ];
 
-export default function ProfileSetUpPart2Screen({ navigation }) {
+export default function ProfileSetUpPart2Screen({ navigation, route }) {
   const user = auth.currentUser;
   const uid = user?.uid;
 
-  // store answers in a map: prompt → answer
-  const [answers, setAnswers] = useState({});
+  // Load existing prompt answers if provided
+  const [answers, setAnswers] = useState(() => {
+    const incoming = route?.params?.prompts || [];
+    const map = {};
+    incoming.forEach(item => { map[item.prompt] = item.answer; });
+    return map;
+  });
 
-  const handleSelectPrompt = prompt => {
-    // if already selected, do nothing
+  const handleSelectPrompt = (prompt) => {
     if (answers.hasOwnProperty(prompt)) return;
-    // add empty answer to reveal text field
     setAnswers({ ...answers, [prompt]: '' });
   };
 
@@ -44,29 +47,23 @@ export default function ProfileSetUpPart2Screen({ navigation }) {
   };
 
   const handleNext = async () => {
-    // gather only non-empty answers
     const filled = Object.entries(answers)
       .filter(([_, ans]) => ans.trim().length > 0)
       .map(([prompt, ans]) => ({ prompt, answer: ans.trim() }));
 
     if (filled.length < 1) {
-      return Alert.alert(
-        'Answer at least one prompt',
-        'Please respond to at least one question to continue.'
-      );
+      return Alert.alert('Answer at least one prompt', 'Please respond to at least one question to continue.');
     }
+
     if (filled.length > 5) {
-      return Alert.alert(
-        'Too many answers',
-        'You can answer up to 5 prompts only.'
-      );
+      return Alert.alert('Too many answers', 'You can answer up to 5 prompts only.');
     }
+
     if (!uid) {
       return Alert.alert('Not signed in', 'Could not find your user account.');
     }
 
     try {
-      // merge into /users/{uid}.prompts
       await setDoc(
         doc(db, 'users', uid),
         {
@@ -75,7 +72,11 @@ export default function ProfileSetUpPart2Screen({ navigation }) {
         },
         { merge: true }
       );
-      navigation.replace('MyPreferences');
+      if (route?.params?.fromEditProfile) {
+        navigation.replace('Me');
+      } else {
+        navigation.replace('PhotoUpload');
+      }
     } catch (err) {
       Alert.alert('Error saving prompts', err.message);
     }
@@ -92,18 +93,10 @@ export default function ProfileSetUpPart2Screen({ navigation }) {
         return (
           <View key={prompt} style={styles.promptBlock}>
             <TouchableOpacity
-              style={[
-                styles.promptButton,
-                isOpen && styles.promptButtonSelected
-              ]}
+              style={[styles.promptButton, isOpen && styles.promptButtonSelected]}
               onPress={() => handleSelectPrompt(prompt)}
             >
-              <Text
-                style={[
-                  styles.promptText,
-                  isOpen && styles.promptTextSelected
-                ]}
-              >
+              <Text style={[styles.promptText, isOpen && styles.promptTextSelected]}>
                 {prompt}
               </Text>
             </TouchableOpacity>
