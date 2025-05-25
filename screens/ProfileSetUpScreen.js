@@ -122,6 +122,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
       console.log('Profile saved:', payload);
       navigation.replace('ProfileSetUpPart2', {
         fromEditProfile: true,
+        fromMeScreen: params.fromMeScreen || false,
         prompts: params.prompts || []
       });
     } catch (err) {
