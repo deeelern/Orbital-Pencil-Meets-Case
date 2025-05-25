@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { auth, db } from '../FirebaseConfig';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect } from 'react';
 
 // Reusable “radio‐button” row
 function RadioRow({ options, value, onChange }) {
@@ -41,7 +43,7 @@ function RadioRow({ options, value, onChange }) {
   );
 }
 
-export default function MyPreferencesScreen({ navigation }) {
+export default function MyPreferencesScreen({ navigation, route }) {
   const user = auth.currentUser;
   const uid  = user?.uid;
 
@@ -75,50 +77,128 @@ export default function MyPreferencesScreen({ navigation }) {
   const smokeOpts  = ['Not at all','Open to it'];
   const drinkOpts  = ['Not at all','Open to it'];
 
-  // save & navigate home
-  const handleDone = async () => {
-    if (!uid) {
-      Alert.alert('Not signed in', 'Please log in again.');
-      return;
-    }
-    if (ageMin > ageMax) {
-      Alert.alert('Invalid age range', 'Min age cannot exceed Max age.');
-      return;
-    }
-    if (heightMin > heightMax) {
-      Alert.alert('Invalid height range', 'Min height cannot exceed Max height.');
-      return;
-    }
-    const prefsPayload = {
-      gender,
-      ageRange: { min: ageMin, max: ageMax },
-      distanceKm: distance,
-      ethnicity,
-      religion,
-      goals,
-      heightRange:   { min: heightMin, max: heightMax }, // cm
-      educationLevel: education,                         // this and above
-      smoking,
-      drinking,
-      updatedAt: serverTimestamp()
+useEffect(() => {
+  if (isEditing && uid) {
+    const fetchPreferences = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists()) {
+          const prefs = userDoc.data().preferences || {};
+          if (prefs.gender) setGender(prefs.gender);
+          if (prefs.ageRange?.min) setAgeMin(prefs.ageRange.min);
+          if (prefs.ageRange?.max) setAgeMax(prefs.ageRange.max);
+          if (prefs.distanceKm) setDistance(prefs.distanceKm);
+          if (prefs.ethnicity) setEthnicity(prefs.ethnicity);
+          if (prefs.religion) setReligion(prefs.religion);
+          if (prefs.goals) setGoals(prefs.goals);
+          if (prefs.heightRange?.min) setHeightMin(prefs.heightRange.min);
+          if (prefs.heightRange?.max) setHeightMax(prefs.heightRange.max);
+          if (prefs.educationLevel) setEducation(prefs.educationLevel);
+          if (prefs.smoking) setSmoking(prefs.smoking);
+          if (prefs.drinking) setDrinking(prefs.drinking);
+        }
+      } catch (err) {
+        console.warn('Failed to load saved preferences:', err.message);
+      }
     };
 
-    try {
-      await setDoc(
-        doc(db, 'users', uid),
-        { preferences: prefsPayload },
-        { merge: true }
-      );
-      // replace the stack so Home is the new root
-      navigation.replace('Home');
-    } catch (err) {
-      Alert.alert('Error saving preferences', err.message);
-    }
+    fetchPreferences();
+  }
+}, [isEditing, uid]);
+
+const isEditing = route?.params?.fromEditProfile === true;
+
+const handleDone = async () => {
+  const {
+    email,
+    password,
+    profile,
+    prompts = [],
+    photos = [],
+    fromEditProfile
+  } = route.params || {};
+
+  console.log("Saving account with:", { email, password, isEditing });
+
+  if (ageMin > ageMax) {
+    Alert.alert('Invalid age range', 'Min age cannot exceed Max age.');
+    return;
+  }
+  if (heightMin > heightMax) {
+    Alert.alert('Invalid height range', 'Min height cannot exceed Max height.');
+    return;
+  }
+
+  const preferences = {
+    gender,
+    ageRange: { min: ageMin, max: ageMax },
+    distanceKm: distance,
+    ethnicity,
+    religion,
+    goals,
+    heightRange: { min: heightMin, max: heightMax },
+    educationLevel: education,
+    smoking,
+    drinking,
+    preferencesUpdatedAt: serverTimestamp()
   };
+
+  try {
+    let finalUid;
+    // if not signed in yet, create the account
+    if (!isEditing && !auth.currentUser) {
+      const userCred = await auth.createUserWithEmailAndPassword(email, password);
+      finalUid = userCred.user.uid;
+    } else {
+      finalUid = auth.currentUser.uid;
+    }
+
+    let finalPhotos = photos;
+
+    // Preserve existing photos if editing and none were passed
+    if (isEditing && (!photos || photos.length === 0)) {
+      const userDoc = await db.collection('users').doc(finalUid).get();
+      if (userDoc.exists && userDoc.data().photos) {
+        finalPhotos = userDoc.data().photos;
+      }
+    }
+
+    // write entire user document
+    const userData = {
+      ...profile,
+      prompts,
+      preferences,
+      profileCompleted: true,
+    };
+
+    if (finalPhotos && finalPhotos.length > 0) {
+      userData.photos = finalPhotos;
+    }
+
+    if (!isEditing) {
+      userData.createdAt = serverTimestamp();
+      if (email) userData.email = email;
+    }
+
+    await setDoc(doc(db, 'users', finalUid), userData, { merge: true });
+
+    if (isEditing) {
+      navigation.replace('Me');
+    } else {
+      navigation.replace('Home');
+    }
+  } catch (err) {
+    Alert.alert('Error saving profile', err.message);
+  }
+};
 
   return (
     <ScrollView style={styles.container}>
-    {/* 1) Header & subheader go here */}
+    
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#333" />
+      </TouchableOpacity>
+
       <Text style={styles.header}>What’s your type?</Text>
       <Text style={styles.subheader}>
         Preferences help us better find your match.
@@ -294,12 +374,22 @@ export default function MyPreferencesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: '#fff', padding: 20 },
+  container:    { flex: 1, backgroundColor: '#fff', padding: 20
+   },
+
+  backButton: {
+  position: 'absolute',
+  top: 10,
+  left: -12,
+  zIndex: 999,
+  padding: 8
+  },
 
   header:       {
     fontSize:    24,
     fontWeight:  '600',
-    marginBottom: 4
+    marginBottom: 4,
+    marginTop: 55
   },
   subheader:    {
     fontSize:     14,

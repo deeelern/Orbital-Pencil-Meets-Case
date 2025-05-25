@@ -5,7 +5,6 @@ import { StyleSheet, View, Image, Animated, Alert } from 'react-native';
 
 import { NavigationContainer }             from '@react-navigation/native';
 import { createNativeStackNavigator }      from '@react-navigation/native-stack';
-import { GestureHandlerRootView }          from 'react-native-gesture-handler';
 
 import { auth }                            from "./FirebaseConfig";
 import { signInWithEmailAndPassword }      from 'firebase/auth';
@@ -63,30 +62,28 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Login">
-            {props => (
-              <LoginScreen
-                onLogin={(e, p) => handleLogin(e, p, props.navigation)}
-                navigation={props.navigation}
-              />
-            )}
-          </Stack.Screen>
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="SignUp" component={SignUpScreen} />
-          <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
-          <Stack.Screen name="ProfileSetUpPart2" component={ProfileSetUpPart2Screen} />
-          <Stack.Screen name="PhotoUpload" component={PhotoUploadScreen} />
-          <Stack.Screen name="MyPreferences" component={MyPreferencesScreen} />
-          <Stack.Screen name="Chat" component={ChatScreen} />
-          <Stack.Screen name="Meet" component={MapScreen} />
-          <Stack.Screen name="Me" component={MeScreen} />
-        </Stack.Navigator>
-        <StatusBar style="auto" />
-      </NavigationContainer>
-    </GestureHandlerRootView>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login">
+          {props => (
+            <LoginScreen
+              onLogin={(e, p) => handleLogin(e, p, props.navigation)}
+              navigation={props.navigation}
+            />
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} />
+        <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+        <Stack.Screen name="ProfileSetUpPart2" component={ProfileSetUpPart2Screen} />
+        <Stack.Screen name="PhotoUpload" component={PhotoUploadScreen} />
+        <Stack.Screen name="MyPreferences" component={MyPreferencesScreen} />
+        <Stack.Screen name="Chat" component={ChatScreen} />
+        <Stack.Screen name="Meet" component={MapScreen} />
+        <Stack.Screen name="Me" component={MeScreen} />
+      </Stack.Navigator>
+      <StatusBar style="auto" />
+    </NavigationContainer>
   );
 }
 
