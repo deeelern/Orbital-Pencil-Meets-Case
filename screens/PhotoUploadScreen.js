@@ -12,6 +12,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { auth, db } from '../FirebaseConfig';
 import firebase from 'firebase/compat/app';
 import { UPLOAD_PRESET } from '../CloudinaryConfig';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const PHOTO_SIZE = (width - 60) / 3;
@@ -157,39 +158,52 @@ export default function PhotoUploadScreen({ navigation, route }) {
     return uploadedUrls;
   };
 
-  const handleNext = async () => {
-    const validPhotos = photos.filter(p => p.uri);
-    if (validPhotos.length < 3) {
-      return Alert.alert('Add more photos', 'Upload at least 3 photos.');
-    }
-    if (!uid) return Alert.alert('Error', 'User not found');
+const handleNext = async () => {
+  const isEditing = route?.params?.fromEditProfile === true;
 
-    setUploading(true);
-    try {
-      const urls = await uploadPhotosToCloudinary();
+  const validPhotos = photos.filter(p => p.uri);
+  if (validPhotos.length < 3) {
+    return Alert.alert('Add more photos', 'Upload at least 3 photos.');
+  }
+
+  setUploading(true);
+  try {
+    const urls = await uploadPhotosToCloudinary();
+
+    if (isEditing && uid) {
+      // User is editing profile, update photos in Firestore only
       await db.collection('users').doc(uid).set(
         {
           photos: urls,
-          photosUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          profileCompleted: true
+          photosUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
         },
-        { merge: true }
+        { merge: true } // prevents overwriting other fields
       );
-
-      if (route?.params?.from === 'MeScreen') {
-        navigation.goBack();
-      } else {
-        navigation.replace('MyPreferences');
-      }
-    } catch (e) {
-      Alert.alert('Upload Failed', e.message);
-    } finally {
-      setUploading(false);
+      navigation.goBack(); // return to MeScreen
+    } else {
+      // Part of sign-up flow — pass photos forward
+      navigation.navigate('MyPreferences', {
+        ...route.params,
+        photos: urls,
+        fromEditProfile: false
+      });
     }
-  };
+  } catch (e) {
+    Alert.alert('Upload Failed', e.message);
+  } finally {
+    setUploading(false);
+  }
+};
+
+
 
   return (
     <View style={styles.container}>
+
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#333" />
+      </TouchableOpacity>
+
       <Text style={styles.heading}>Upload your photos</Text>
       <Text style={styles.subheading}>
         Tap + to add, or × to remove. Upload at least 3.
@@ -237,9 +251,16 @@ export default function PhotoUploadScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  container: { flex: 1, padding: 20, paddingTop: 60, backgroundColor: '#fff' },
   heading: { fontSize: 24, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
   subheading: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 20 },
+  backButton: {
+  position: 'absolute',
+  top: 30,
+  left: 15,
+  zIndex: 10,
+  padding: 8
+  },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

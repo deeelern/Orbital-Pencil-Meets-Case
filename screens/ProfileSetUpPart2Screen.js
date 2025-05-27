@@ -11,6 +11,9 @@ import {
 } from 'react-native';
 import { auth, db } from '../FirebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect } from 'react';
+
 
 const PROMPTS = [
   'A book everyone should read:',
@@ -29,13 +32,16 @@ export default function ProfileSetUpPart2Screen({ navigation, route }) {
   const user = auth.currentUser;
   const uid = user?.uid;
 
-  // Load existing prompt answers if provided
-  const [answers, setAnswers] = useState(() => {
+  const [answers, setAnswers] = useState({});
+
+  useEffect(() => {
     const incoming = route?.params?.prompts || [];
     const map = {};
-    incoming.forEach(item => { map[item.prompt] = item.answer; });
-    return map;
-  });
+    incoming.forEach(item => {
+      map[item.prompt] = item.answer;
+    });
+    setAnswers(map);
+  }, [route?.params?.prompts]);
 
   const handleSelectPrompt = (prompt) => {
     if (answers.hasOwnProperty(prompt)) return;
@@ -47,6 +53,8 @@ export default function ProfileSetUpPart2Screen({ navigation, route }) {
   };
 
   const handleNext = async () => {
+    const isEditing = route?.params?.fromEditProfile === true;
+
     const filled = Object.entries(answers)
       .filter(([_, ans]) => ans.trim().length > 0)
       .map(([prompt, ans]) => ({ prompt, answer: ans.trim() }));
@@ -59,31 +67,39 @@ export default function ProfileSetUpPart2Screen({ navigation, route }) {
       return Alert.alert('Too many answers', 'You can answer up to 5 prompts only.');
     }
 
-    if (!uid) {
-      return Alert.alert('Not signed in', 'Could not find your user account.');
+    if (isEditing && auth.currentUser?.uid) {
+      const uid = auth.currentUser.uid;
+
+      const payload = {
+        ...route.params.profile, // merged from ProfileSetupScreen
+        prompts: filled,
+        profileUpdatedAt: serverTimestamp(),
+        promptsUpdatedAt: serverTimestamp()
+      };
+
+      try {
+        await setDoc(doc(db, 'users', uid), payload, { merge: true });
+        return navigation.replace('Me'); // Return to MeScreen
+      } catch (err) {
+        return Alert.alert('Failed to update profile', err.message);
+      }
     }
 
-    try {
-      await setDoc(
-        doc(db, 'users', uid),
-        {
-          prompts: filled,
-          promptsUpdatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
-      if (route?.params?.fromMeScreen) {
-        navigation.replace('Me');
-      } else {
-        navigation.replace('PhotoUpload');
-      }
-    } catch (err) {
-      Alert.alert('Error saving prompts', err.message);
-    }
+    // Sign-up flow: pass everything forward
+    navigation.navigate('PhotoUpload', {
+      ...route.params,
+      prompts: filled
+    });
   };
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#333" />
+      </TouchableOpacity>
+      
       <Text style={styles.heading}>
         Let’s get personal: pick up to 5 prompts to tell people about you
       </Text>
@@ -124,7 +140,15 @@ export default function ProfileSetUpPart2Screen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    paddingBottom: 40
+    paddingBottom: 40,
+    paddingTop: 75
+  },
+  backButton: {
+  position: 'absolute',
+  top: 30,
+  left: 15,
+  zIndex: 10,
+  padding: 8
   },
   heading: {
     fontSize: 20,
