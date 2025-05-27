@@ -65,23 +65,29 @@ export default function MeScreen({ navigation }) {
     if (!userProfile) return;
     navigation.navigate('ProfileSetup', {
       ...userProfile,
+      prompts: userProfile.prompts || [],
       editingMode: true,
-      fromMeScreen: true
+      fromMeScreen: true,
+      fromEditProfile: true
     });
   };
 
   const handleEditPictures = () => {
     navigation.navigate('PhotoUpload', {
       existingPhotos: userProfile.photos || [],
-      from: 'MeScreen' 
+      from: 'MeScreen',
+      fromEditProfile: true
     });
   };
 
   const handleEditPreferences = () => {
-    navigation.navigate('MyPreferences', { fromMeScreen: true });
+    navigation.navigate('MyPreferences', { 
+      fromMeScreen: true,
+      fromEditProfile: true,
+    });
   };
 
-  const handleBack = () => navigation.goBack();
+  const handleBack = () => navigation.navigate('Home');
   const handleSettings = () => Alert.alert('Settings', 'Settings screen coming soon!');
 
   if (loading) {
@@ -208,7 +214,7 @@ export default function MeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: 15 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

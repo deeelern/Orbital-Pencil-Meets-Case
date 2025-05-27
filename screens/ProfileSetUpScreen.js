@@ -14,6 +14,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { auth, db } from '../FirebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { Ionicons } from '@expo/vector-icons';
 
 // Radio button component
 function Radio({ label, selected, onPress }) {
@@ -86,6 +87,8 @@ export default function ProfileSetupScreen({ navigation, route }) {
   const [religion, setReligion] = useState(params.religion || null);
   const [otherReligion, setOtherReligion] = useState('');
 
+  const isEditing = route?.params?.fromEditProfile === true;
+
   const handleDone = async () => {
     if (!datePref) return Alert.alert('Missing field', 'Please choose who you want to date.');
     if (!firstName.trim() || !lastName.trim()) return Alert.alert('Missing name', 'Please enter both your first and last name.');
@@ -98,42 +101,36 @@ export default function ProfileSetupScreen({ navigation, route }) {
     if (!checkIs18(dob)) return Alert.alert('Too young', 'You must be at least 18 years old to join!');
     if (!religion) return Alert.alert('Missing religion', 'Please select your religion.');
 
-    const payload = {
-      datePref,
-      dateOfBirth: dob,
-      firstName,
-      lastName,
-      gender: myGender,
-      degree,
-      school,
-      jobTitle,
-      heightCm,
-      ethnicity: otherEthnicity || ethnicity,
-      religion: religion === 'Other' ? otherReligion : religion,
-      profileSetupAt: serverTimestamp(),
-    };
-
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('Not signed in');
-      const uid = user.uid;
-
-      await setDoc(doc(db, 'users', uid), payload, { merge: true });
-      console.log('Profile saved:', payload);
-      navigation.replace('ProfileSetUpPart2', {
-        fromEditProfile: true,
-        fromMeScreen: params.fromMeScreen || false,
-        prompts: params.prompts || []
-      });
-    } catch (err) {
-      console.error(err);
-      Alert.alert('Error saving profile', err.message);
-    }
+    navigation.navigate('ProfileSetUpPart2', {
+      fromEditProfile: isEditing,
+      fromMeScreen: route?.params?.fromMeScreen || false,
+      prompts: route?.params.prompts || [],
+      profile: {
+        datePref,
+        dateOfBirth: dob,
+        firstName,
+        lastName,
+        gender: myGender,
+        degree,
+        school,
+        jobTitle,
+        heightCm,
+        ethnicity: otherEthnicity || ethnicity,
+        religion: religion === 'Other' ? otherReligion : religion
+      },
+      email: route?.params?.email,
+      password: route?.params?.password
+    });
   };
 
   return (
     <ScrollView style={styles.screen}>
       <View style={styles.container}>
+
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+
         <Text style={styles.h1}>Who do you want to date?</Text>
         {['Women','Men','Everyone'].map(opt => (
           <Radio key={opt} label={opt} selected={datePref===opt} onPress={()=>setDatePref(opt)} />
@@ -213,9 +210,16 @@ export default function ProfileSetupScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#fff' },
-  container: { padding: 20, paddingBottom: 40 },
+  container: { padding: 20, paddingBottom: 40, paddingTop: 50 },
   h1: { fontSize: 20, fontWeight: '600', marginTop: 24, marginBottom: 8 },
   sub: { fontSize: 14, color: '#555', marginBottom: 12 },
+  backButton: {
+  position: 'absolute',
+  top: 30,
+  left: 10,
+  zIndex: 999,
+  padding: 8
+  },
   input: {
     height: 48,
     borderWidth: 1,
