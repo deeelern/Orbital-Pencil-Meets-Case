@@ -153,7 +153,7 @@ In future iterations, Pencil Meets Case could be expanded to support interest-ba
 
 ## Proposed Program Flow
 
-
+![Pencil Meets Case_Programme Flow](https://github.com/user-attachments/assets/4636a902-1d68-4e7f-87b0-4dfc35c3708e)
 
 
 ## Development Plan
