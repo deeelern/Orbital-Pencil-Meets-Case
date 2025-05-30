@@ -14,7 +14,6 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Gradient Header */}
       <LinearGradient
         colors={['#6C5CE7', '#74b9ff']}
         start={{ x: 0, y: 0 }}
@@ -30,13 +29,11 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </LinearGradient>
 
-      {/* Main Content */}
       <View style={styles.body}>
         <Text style={styles.greeting}>Welcome Back!</Text>
         <Text style={styles.subText}>This is the app’s main screen!</Text>
       </View>
 
-      {/* Bottom Navigation Panel */}
       <View style={styles.bottomPanel}>
         <TouchableOpacity style={styles.tabButton} onPress={() => navigation.navigate('Chat')}>
           <Ionicons name="chatbubble-outline" size={22} color="#6C5CE7" />
