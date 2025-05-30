@@ -35,26 +35,26 @@ In future iterations, Pencil Meets Case could be expanded to support interest-ba
 
 
 
-1. __User Registration and Profile Setup \
-__As a new user, I want to sign up and set up my profile with personal details and preferences, so that I can represent myself authentically and receive relevant matches. \
+1. User Registration and Profile Setup
+   As a new user, I want to sign up and set up my profile with personal details and preferences, so that I can represent myself authentically and receive relevant matches.
 
-2. __Privacy and Location Control \
-__As a user, I want to control how my location is shared, so that I feel safe using the app while still benefiting from proximity-based features. \
+2. Privacy and Location Control
+   As a user, I want to control how my location is shared, so that I feel safe using the app while still benefiting from proximity-based features.
 
-3. __Proximity-Based Matching & Notification \
-__As a user, I want to be notified when someone nearby fits my preferences and both of us express interest, so that we can be guided to a nearby spot on campus for a spontaneous meetup. \
+3. Proximity-Based Matching & Notification
+   As a user, I want to be notified when someone nearby fits my preferences and both of us express interest, so that we can be guided to a nearby spot on campus for a spontaneous meetup.
 
-4. __Guided On-Campus Meetups \
-__As a user, I want the app to suggest convenient and safe locations on campus for in-person meetings, so that I can transition from online matching to real-life interaction easily. \
+4. Guided On-Campus Meetups
+   As a user, I want the app to suggest convenient and safe locations on campus for in-person meetings, so that I can transition from online matching to real-life interaction easily.
 
-5. __In-App Messaging After Meetup \
-__As a user, I want to chat through a secure in-app messaging system after the meetup, so that I can keep the conversation going in a safe environment. \
+5. In-App Messaging After Meetup
+   As a user, I want to chat through a secure in-app messaging system after the meetup, so that I can keep the conversation going in a safe environment.
 
-6. __Safety and Reporting Tools \
-__As a user, I want the ability to report or block someone easily, so that I feel protected and in control of my experience. \
+6. Safety and Reporting Tools
+   As a user, I want the ability to report or block someone easily, so that I feel protected and in control of my experience.
 
-7. __Interaction History and Feedback \
-__As a user, I want to view my past matches and meetings, so that I can track my connections and reflect on my interactions.
+7. Interaction History and Feedback
+   As a user, I want to view my past matches and meetings, so that I can track my connections and reflect on my interactions.
 
 
 ## Functions/Features
