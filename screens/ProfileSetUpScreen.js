@@ -16,11 +16,10 @@ import { Picker } from '@react-native-picker/picker';
 import { auth, db } from '../FirebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient'; // Now enabled!
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
-// Enhanced Radio button component with modern design
 function ModernRadio({ label, selected, onPress, icon }) {
   return (
     <TouchableOpacity 
@@ -74,7 +73,6 @@ function SectionHeader({ title, subtitle, icon }) {
 export default function ProfileSetupScreen({ navigation, route }) {
   const params = route?.params || {};
 
-  // All existing state variables remain the same
   const [datePref, setDatePref] = useState(params.datePref || null);
   
   const [dob, setDob] = useState(() => {
@@ -121,7 +119,6 @@ export default function ProfileSetupScreen({ navigation, route }) {
 
   const isEditing = route?.params?.fromEditProfile === true;
 
-  // Calculate progress based on filled fields
   const calculateProgress = () => {
     let filled = 0;
     const total = 10;
@@ -140,7 +137,6 @@ export default function ProfileSetupScreen({ navigation, route }) {
     return (filled / total) * 100;
   };
 
-  // Same handleDone function
   const handleDone = async () => {
     if (!datePref) return Alert.alert('Missing field', 'Please choose who you want to date.');
     if (!firstName.trim() || !lastName.trim()) return Alert.alert('Missing name', 'Please enter both your first and last name.');
@@ -177,7 +173,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      {/* Header with gradient */}
+
       <LinearGradient
         colors={['#6C5CE7', '#74b9ff']}
         start={{ x: 0, y: 0 }}
@@ -438,7 +434,6 @@ export default function ProfileSetupScreen({ navigation, route }) {
         </View>
       </ScrollView>
 
-      {/* Fixed bottom button with gradient */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity style={styles.modernSubmitBtn} onPress={handleDone}>
           <LinearGradient
@@ -484,7 +479,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#fff',
-    marginLeft: -40, // Compensate for back button
+    marginLeft: -40,
   },
   headerSpacer: {
     width: 40,
@@ -518,7 +513,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 100, // Space for fixed button
+    paddingBottom: 100,
   },
   section: {
     marginBottom: 32,
