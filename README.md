@@ -71,8 +71,8 @@ __As a user, I want to view my past matches and meetings, so that I can track my
 * Firestore user document is only created after full profile completion and uploaded onto Firebase database
 * Conditional navigation flow based on whether the user is signing up or editing
 
-<img src="https://github.com/user-attachments/assets/8b05877e-a443-40b2-9359-aebda95dc0ac" alt="welcomepage" width="400"/>
-<img src="https://github.com/user-attachments/assets/3a30d8e5-559b-4533-8346-66329080d445" alt="createaccountpage" width="400"/>
+<img src="https://github.com/user-attachments/assets/8b05877e-a443-40b2-9359-aebda95dc0ac" alt="welcomepage" width="200"/>
+<img src="https://github.com/user-attachments/assets/3a30d8e5-559b-4533-8346-66329080d445" alt="createaccountpage" width="200"/>
 
 ### 
 
@@ -86,10 +86,10 @@ __As a user, I want to view my past matches and meetings, so that I can track my
 * Users can upload and preview up to 6 photos, which are uploaded to Cloudinary
 * Users specify preferences such as preferred age range, distance, relationship goals, habits, education level, and more
 
-![profilecreationpage](https://github.com/user-attachments/assets/ed5f2f68-72b3-4825-af48-2335edbd0da5)
-![promptspage](https://github.com/user-attachments/assets/730af555-9ec1-4c2d-8d0c-3d1fc8697ee7)
-![preferencespage](https://github.com/user-attachments/assets/d0582cc5-a59c-4986-8406-cdb625a2c8db)
-![photouploadpage](https://github.com/user-attachments/assets/b9c01cd2-387a-4f27-9e95-1e24571c94d9)
+<img src="https://github.com/user-attachments/assets/ed5f2f68-72b3-4825-af48-2335edbd0da5" alt="profilecreationpage" width="200"/>
+<img src="https://github.com/user-attachments/assets/730af555-9ec1-4c2d-8d0c-3d1fc8697ee7" alt="promptspage" width="200"/>
+<img src="https://github.com/user-attachments/assets/d0582cc5-a59c-4986-8406-cdb625a2c8db" alt="preferencespage" width="200"/>
+<img src="https://github.com/user-attachments/assets/b9c01cd2-387a-4f27-9e95-1e24571c94d9" alt="photouploadpage" width="200"/>
 
 
 ### 
@@ -104,8 +104,8 @@ __As a user, I want to view my past matches and meetings, so that I can track my
     * Modify preferences
     * Settings page to modify in-app preferences
  
-![profilepagemain](https://github.com/user-attachments/assets/18a6d6e2-6610-46e7-9cbc-39f0b40f3e06)
-![settingspage](https://github.com/user-attachments/assets/bbd7b86b-d0ab-4d65-8031-c8867c44f540)
+<img src="https://github.com/user-attachments/assets/18a6d6e2-6610-46e7-9cbc-39f0b40f3e06" alt="profilepagemain" width="200"/>
+<img src="https://github.com/user-attachments/assets/bbd7b86b-d0ab-4d65-8031-c8867c44f540" alt="settingspage" width="200"/>
 
 
 ## 
