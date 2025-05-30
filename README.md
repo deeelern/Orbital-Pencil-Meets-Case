@@ -71,8 +71,8 @@ __As a user, I want to view my past matches and meetings, so that I can track my
 * Firestore user document is only created after full profile completion and uploaded onto Firebase database
 * Conditional navigation flow based on whether the user is signing up or editing
 
-![welcomepage](https://github.com/user-attachments/assets/8b05877e-a443-40b2-9359-aebda95dc0ac)
-![createaccountpage](https://github.com/user-attachments/assets/3a30d8e5-559b-4533-8346-66329080d445)
+<img src="https://github.com/user-attachments/assets/8b05877e-a443-40b2-9359-aebda95dc0ac" alt="welcomepage" width="400"/>
+<img src="https://github.com/user-attachments/assets/3a30d8e5-559b-4533-8346-66329080d445" alt="createaccountpage" width="400"/>
 
 ### 
 
