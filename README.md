@@ -353,17 +353,17 @@ In future iterations, Pencil Meets Case could be expanded to support interest-ba
 
 
 
-* If you own an Android device, you can directly install and run the .apk file: \
+* If you own an Android device, you can directly install and run the .apk file:
 
-    1. Copy the .apk file to your Android device. \
+    1. Copy the .apk file to your Android device.
 
-    2. On your device, go to __Settings > Security__ and enable __Install from Unknown Sources__ (only if not enabled yet). \
+    2. On your device, go to __Settings > Security__ and enable __Install from Unknown Sources__ (only if not enabled yet).
 
-    3. Open the .apk file using any file manager app. \
+    3. Open the .apk file using any file manager app.
 
-    4. Follow the on-screen instructions to complete the installation. \
+    4. Follow the on-screen instructions to complete the installation.
 
-    5. Launch the app from your home screen. \
+    5. Launch the app from your home screen.
 
 
 
@@ -371,10 +371,10 @@ In future iterations, Pencil Meets Case could be expanded to support interest-ba
 
 
 
-* If you're testing on a PC or laptop (without a physical Android device), you will need to install __Android Studio__: \
+* If you're testing on a PC or laptop (without a physical Android device), you will need to install __Android Studio__:
 
-    1. Download and install __Android Studio__ from the[ official website](https://developer.android.com/studio). \
+    1. Download and install __Android Studio__ from the[ official website](https://developer.android.com/studio).
 
-    2. Open Android Studio and set up an Android Virtual Device (AVD). \
+    2. Open Android Studio and set up an Android Virtual Device (AVD).
 
     3. Load the .apk file into the AVD to simulate and test the app.
