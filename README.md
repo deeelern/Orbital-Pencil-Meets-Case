@@ -353,7 +353,7 @@ In future iterations, Pencil Meets Case could be expanded to support interest-ba
 
 
 
-* If you own an Android device, you can directly install and run the .apk file:
+* If you own an Android device, you can directly install and run the .apk file: (https://expo.dev/artifacts/eas/rYLvk5EvfEPDms3osDnrbm.apk)
 
     1. Copy the .apk file to your Android device.
 
