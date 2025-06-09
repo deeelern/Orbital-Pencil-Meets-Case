@@ -13,17 +13,32 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dickson76.test3",
+      "config": {
+        "googleMapsApiKey": "AIzaSyBtp2eFkV7MYyCZiRCxyiBrKs0nTgyTI-4"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.dickson76.test3",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBtp2eFkV7MYyCZiRCxyiBrKs0nTgyTI-4"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "dde8e4f2-3406-4527-97ca-a8fa1dad2c8b"
+      }
     }
   }
 }
