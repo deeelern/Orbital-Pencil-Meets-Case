@@ -91,7 +91,13 @@ export default function MeScreen({ navigation }) {
     });
   };
 
-  const handleBack = () => navigation.navigate('Home');
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Home');
+    }
+  };
   const handleSettings = () => navigation.navigate('Settings', { from: 'Me' });
 
   if (loading) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,37 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { db, auth } from '../FirebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import { updateUserLocation } from '../locationUtils';
 
 export default function HomeScreen({ navigation }) {
+  const [locationSharing, setLocationSharing] = useState(true);
+
+  // Fetch user's locationSharing setting from Firestore
+  const fetchLocationSetting = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const docSnap = await getDoc(doc(db, 'users', user.uid));
+    if (docSnap.exists()) {
+      const userData = docSnap.data();
+      setLocationSharing(userData.settings?.locationSharing ?? true);
+    }
+  };
+
+  // Load locationSharing preference on mount
+  useEffect(() => {
+    fetchLocationSetting();
+  }, []);
+
+  // Update location if sharing is enabled
+  useEffect(() => {
+    if (locationSharing) {
+      updateUserLocation();
+    }
+  }, [locationSharing]);
+
   const handleSettings = () => navigation.navigate('Settings', { from: 'Home' });
 
   return (
@@ -53,10 +82,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa'
-  },
+  container: { flex: 1, backgroundColor: '#f8f9fa' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

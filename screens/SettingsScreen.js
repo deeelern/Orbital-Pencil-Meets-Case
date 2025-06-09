@@ -19,12 +19,21 @@ export default function SettingsScreen({ navigation, route }) {
   const [notifications, setNotifications] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
   const [privateMode, setPrivateMode] = useState(false);
+  const [locationSharing, setLocationSharing] = useState(true);
   const [loading, setLoading] = useState(true);
   const user = auth.currentUser;
   const from = route?.params?.from || 'Home';
 
   const handleGoBack = () => {
-    navigation.navigate(from === 'Me' ? 'Me' : 'Home');
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      if (from === 'Me') {
+        navigation.navigate('Me');
+      } else {
+        navigation.navigate('Home');
+      }
+    }
   };
 
   useEffect(() => {
@@ -42,6 +51,7 @@ export default function SettingsScreen({ navigation, route }) {
         setNotifications(data.settings?.notifications ?? true);
         setShowOnline(data.settings?.showOnline ?? true);
         setPrivateMode(data.settings?.privateMode ?? false);
+        setLocationSharing(data.settings?.locationSharing ?? true);
       }
     } catch {
       Alert.alert('Error', 'Failed to load settings.');
@@ -58,6 +68,7 @@ export default function SettingsScreen({ navigation, route }) {
           notifications,
           showOnline,
           privateMode,
+          locationSharing,
           ...newSettings,
           updatedAt: serverTimestamp()
         }
@@ -82,6 +93,11 @@ export default function SettingsScreen({ navigation, route }) {
     updateUserSettings({ privateMode: val });
   };
 
+  const handleLocationToggle = (val) => {
+    setLocationSharing(val);
+    updateUserSettings({ locationSharing: val });
+  };
+
   const settingsSections = [
     {
       title: 'Preferences',
@@ -101,6 +117,14 @@ export default function SettingsScreen({ navigation, route }) {
           type: 'toggle',
           value: showOnline,
           onToggle: handleOnlineToggle
+        },
+        {
+          icon: 'location-outline',
+          title: 'Share My Location',
+          subtitle: 'Control whether others can see your location',
+          type: 'toggle',
+          value: locationSharing,
+          onToggle: handleLocationToggle
         },
         {
           icon: 'lock-closed-outline',

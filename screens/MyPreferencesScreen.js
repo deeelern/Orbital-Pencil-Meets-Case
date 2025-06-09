@@ -181,6 +181,12 @@ export default function MyPreferencesScreen({ navigation, route }) {
         preferences,
         profileCompleted: true,
         photos: finalPhotos,
+        settings: {
+          notifications: true,
+          showOnline: true,
+          privateMode: false,
+          locationSharing: true
+        },
         ...(email && !isEditing ? { email } : {}),
         ...(isEditing ? {} : { createdAt: serverTimestamp() })
       };
