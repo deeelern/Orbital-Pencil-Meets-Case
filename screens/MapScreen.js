@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Image, Alert, Modal, FlatList } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { db, auth } from '../FirebaseConfig';
 import { collection, query, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -15,12 +15,100 @@ const NUS_CENTER = { latitude: 1.3000, longitude: 103.7800, latitudeDelta: LATIT
 // ✅ Testing toggle — switch to true for hardcoded NUS location testing
 const TESTING_MODE = true;
 
+// Component to show who liked the current user
+function MyLikesModal({ visible, onClose, likes }) {
+  const [likedUsers, setLikedUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchLikedUsers = async () => {
+    if (!likes || likes.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const userPromises = likes.map(async (userId) => {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          return { id: userId, ...userDoc.data() };
+        }
+        return null;
+      });
+      
+      const users = await Promise.all(userPromises);
+      setLikedUsers(users.filter(u => u !== null));
+    } catch (error) {
+      console.error('Error fetching users who liked me:', error);
+      Alert.alert('Error', 'Failed to load users who liked you');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (visible) {
+      fetchLikedUsers();
+    }
+  }, [visible, likes]);
+
+  const renderLikedUser = ({ item }) => (
+    <View style={styles.likedUserCard}>
+      <View style={styles.blurredImageContainer}>
+        <Image
+          source={{ uri: item.photos?.[0] || 'https://via.placeholder.com/100' }}
+          style={styles.blurredImage}
+          blurRadius={15}
+        />
+        <View style={styles.blurOverlay}>
+          <Ionicons name="heart" size={24} color="#ff4458" />
+        </View>
+      </View>
+      <Text style={styles.blurredName}>
+        {item.firstName?.[0] || '?'}***
+      </Text>
+    </View>
+  );
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={styles.likesOverlay}>
+        <View style={styles.likesContainer}>
+          <View style={styles.likesHeader}>
+            <Text style={styles.likesTitle}>People who liked you</Text>
+            <TouchableOpacity onPress={onClose} style={styles.likesCloseButton}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          
+          {loading ? (
+            <Text style={styles.loadingText}>Loading...</Text>
+          ) : likedUsers.length === 0 ? (
+            <View style={styles.noLikesContainer}>
+              <Ionicons name="heart-outline" size={50} color="#ccc" />
+              <Text style={styles.noLikesText}>No likes yet</Text>
+              <Text style={styles.noLikesSubText}>Keep exploring to find matches!</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={likedUsers}
+              renderItem={renderLikedUser}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              contentContainerStyle={styles.likedUsersList}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function MapScreen() {
   const [region, setRegion] = useState(NUS_CENTER);
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [myLikes, setMyLikes] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showMyLikes, setShowMyLikes] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
@@ -179,6 +267,10 @@ export default function MapScreen() {
     navigation.goBack();
   };
 
+  const handleLikesPress = () => {
+    setShowMyLikes(true);
+  };
+
   // Handle map ready event
   const handleMapReady = () => {
     setMapReady(true);
@@ -187,6 +279,14 @@ export default function MapScreen() {
   // Add a refresh function
   const refreshData = async () => {
     await initializeMap();
+    await fetchMyLikes();
+  };
+
+  // Handle profile card close and refresh likes
+  const handleProfileCardClose = async () => {
+    setModalVisible(false);
+    // Refresh my likes when closing profile card (in case someone liked me)
+    await fetchMyLikes();
   };
 
   return (
@@ -216,7 +316,7 @@ export default function MapScreen() {
         showsUserLocation
         showsMyLocationButton={false}
         onMapReady={handleMapReady}
-        initialRegion={NUS_CENTER} // Add initial region
+        initialRegion={NUS_CENTER}
       >
         {/* Only render markers when both map is ready and data is fetched */}
         {mapReady && dataFetched && nearbyUsers.map((user, index) => {
@@ -243,11 +343,20 @@ export default function MapScreen() {
         })}
       </MapView>
 
-      {/* ❤️ Likes counter */}
-      <View style={styles.likesContainer}>
+      {/* ❤️ Likes counter - Now clickable */}
+      <TouchableOpacity 
+        style={styles.likesCounterContainer}
+        onPress={handleLikesPress}
+        activeOpacity={0.8}
+      >
         <Ionicons name="heart" size={26} color="#e74c3c" />
         <Text style={styles.likesText}>{myLikes.length}</Text>
-      </View>
+        {myLikes.length > 0 && (
+          <View style={styles.newLikeBadge}>
+            <Text style={styles.newLikeBadgeText}>!</Text>
+          </View>
+        )}
+      </TouchableOpacity>
 
       {/* Loading indicator */}
       {isLoading && (
@@ -259,8 +368,15 @@ export default function MapScreen() {
       {/* Profile Modal */}
       <ProfileCardModal 
         visible={modalVisible} 
-        onClose={() => setModalVisible(false)} 
+        onClose={handleProfileCardClose} 
         user={selectedUser} 
+      />
+
+      {/* My Likes Modal */}
+      <MyLikesModal
+        visible={showMyLikes}
+        onClose={() => setShowMyLikes(false)}
+        likes={myLikes}
       />
     </View>
   );
@@ -276,15 +392,15 @@ const styles = StyleSheet.create({
     borderWidth: 2, 
     borderColor: '#fff', 
     overflow: 'hidden',
-    backgroundColor: '#f0f0f0' // Fallback background
+    backgroundColor: '#f0f0f0'
   },
   markerImage: { width: '100%', height: '100%' },
-  likesContainer: { 
+  likesCounterContainer: { 
     position: 'absolute', 
     top: 60, 
     right: 20, 
     backgroundColor: '#fff', 
-    padding: 10, 
+    padding: 12, 
     borderRadius: 50, 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -292,9 +408,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3, 
     shadowOffset: { width: 0, height: 2 }, 
     shadowRadius: 5,
-    elevation: 5 // Android shadow
+    elevation: 5,
+    minWidth: 60,
+    justifyContent: 'center'
   },
-  likesText: { fontSize: 16, fontWeight: 'bold', marginLeft: 6 },
+  likesText: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    marginLeft: 6,
+    color: '#333'
+  },
+  newLikeBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#ff4458',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff'
+  },
+  newLikeBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold'
+  },
   backButton: { 
     position: 'absolute', 
     top: 50, 
@@ -326,5 +467,92 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     textAlign: 'center'
-  }
+  },
+
+  // My Likes Modal Styles
+  likesOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  likesContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: '90%',
+    maxHeight: '80%',
+    padding: 20,
+  },
+  likesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  likesTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333'
+  },
+  likesCloseButton: {
+    padding: 5,
+  },
+  loadingText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#666',
+    marginTop: 20,
+  },
+  noLikesContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noLikesText: {
+    textAlign: 'center',
+    fontSize: 18,
+    color: '#666',
+    marginTop: 15,
+    fontWeight: '600'
+  },
+  noLikesSubText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#999',
+    marginTop: 5,
+  },
+  likedUsersList: {
+    paddingTop: 10,
+  },
+  likedUserCard: {
+    flex: 1,
+    margin: 10,
+    alignItems: 'center',
+  },
+  blurredImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  blurredImage: {
+    width: '100%',
+    height: '100%',
+  },
+  blurOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  blurredName: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
 });
