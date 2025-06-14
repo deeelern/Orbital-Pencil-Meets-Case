@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
   SafeAreaView,
   Image,
@@ -22,8 +23,10 @@ const CARD_WIDTH = screenWidth * 0.9;
 const CARD_HEIGHT = screenHeight * 0.7;
 
 // Individual Swipe Card Component
+// Updated SwipeCard Component with improved touch handling
 function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   const handleImageTap = (event) => {
     if (!user.photos || user.photos.length <= 1) return;
@@ -42,11 +45,56 @@ function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
     }
   };
 
+  // Improved pan handlers with better touch discrimination
+  const modifiedPanHandlers = {
+    ...panHandlers,
+    onStartShouldSetPanResponder: (evt, gestureState) => {
+      // Don't intercept if user is actively scrolling
+      if (isScrolling) return false;
+      
+      // Calculate the image section height (approximately 60% of card height)
+      const imageHeight = CARD_HEIGHT * 0.6;
+      const { locationY } = evt.nativeEvent;
+      
+      // Only respond to touches in the image area
+      if (locationY > imageHeight) return false;
+      
+      return false; // Let onMoveShouldSetPanResponder handle the decision
+    },
+    
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      // Don't intercept if user is actively scrolling
+      if (isScrolling) return false;
+      
+      // Calculate the image section height (approximately 60% of card height)
+      const imageHeight = CARD_HEIGHT * 0.6;
+      const { locationY } = evt.nativeEvent;
+      
+      // Only respond to touches in the image area
+      if (locationY > imageHeight) return false;
+      
+      // Require significant horizontal movement compared to vertical
+      const { dx, dy } = gestureState;
+      const horizontalDistance = Math.abs(dx);
+      const verticalDistance = Math.abs(dy);
+      
+      // Only respond if:
+      // 1. Horizontal movement is greater than vertical movement
+      // 2. Horizontal movement is significant (> 20px)
+      // 3. The ratio of horizontal to vertical movement is > 1.5
+      return (
+        horizontalDistance > verticalDistance &&
+        horizontalDistance > 20 &&
+        (verticalDistance === 0 || horizontalDistance / verticalDistance > 1.5)
+      );
+    }
+  };
+
   // Reset active index if it's out of bounds
   const safeActiveIndex = Math.min(activeImageIndex, user.photos?.length - 1 || 0);
 
   return (
-    <Animated.View style={[styles.card, style]} {...panHandlers}>
+    <Animated.View style={[styles.card, style]} {...modifiedPanHandlers}>
       {/* Image Section */}
       <View style={styles.imageSection}>
         {user.photos && user.photos.length > 0 ? (
@@ -103,8 +151,20 @@ function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
         )}
       </View>
 
-      {/* Profile Info Section */}
-      <View style={styles.infoSection}>
+      {/* Scrollable Profile Info Section */}
+      <ScrollView 
+        style={styles.infoScrollView}
+        contentContainerStyle={styles.infoScrollContent}
+        showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={() => setIsScrolling(true)}
+        onScrollEndDrag={() => setIsScrolling(false)}
+        onMomentumScrollBegin={() => setIsScrolling(true)}
+        onMomentumScrollEnd={() => setIsScrolling(false)}
+        scrollEventThrottle={16}
+        // Additional props to improve scroll performance and prevent conflicts
+        keyboardShouldPersistTaps="handled"
+        contentInsetAdjustmentBehavior="automatic"
+      >
         <View style={styles.nameRow}>
           <Text style={styles.nameText} numberOfLines={1}>
             {user.firstName} {user.lastName}
@@ -118,13 +178,13 @@ function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
         </View>
         
         {user.degree && user.school && (
-          <Text style={styles.infoText} numberOfLines={1}>
+          <Text style={styles.infoText} numberOfLines={2}>
             {user.degree} • {user.school}
           </Text>
         )}
         
         {user.jobTitle && (
-          <Text style={styles.infoText} numberOfLines={1}>
+          <Text style={styles.infoText} numberOfLines={2}>
             {user.jobTitle}
           </Text>
         )}
@@ -135,22 +195,53 @@ function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
           </Text>
         )}
         
-        <Text style={styles.infoText} numberOfLines={1}>
+        <Text style={styles.infoText} numberOfLines={2}>
           {[user.gender, user.ethnicity, user.religion].filter(Boolean).join(' • ')}
         </Text>
 
-        {/* First Prompt if available */}
-        {user.prompts && user.prompts.length > 0 && user.prompts[0].prompt && user.prompts[0].answer && (
-          <View style={styles.promptContainer}>
-            <Text style={styles.promptQuestion} numberOfLines={2}>
-              {user.prompts[0].prompt}
-            </Text>
-            <Text style={styles.promptAnswer} numberOfLines={3}>
-              {user.prompts[0].answer}
-            </Text>
+        {/* All Prompts if available */}
+        {user.prompts && user.prompts.length > 0 && (
+          <View style={styles.promptsContainer}>
+            {user.prompts.map((prompt, index) => (
+              prompt.prompt && prompt.answer && (
+                <View key={index} style={styles.promptContainer}>
+                  <Text style={styles.promptQuestion}>
+                    {prompt.prompt}
+                  </Text>
+                  <Text style={styles.promptAnswer}>
+                    {prompt.answer}
+                  </Text>
+                </View>
+              )
+            ))}
           </View>
         )}
-      </View>
+
+        {/* Additional Bio/About section if available */}
+        {user.bio && (
+          <View style={styles.bioContainer}>
+            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.bioText}>{user.bio}</Text>
+          </View>
+        )}
+
+        {/* Interests if available */}
+        {user.interests && user.interests.length > 0 && (
+          <View style={styles.interestsContainer}>
+            <Text style={styles.sectionTitle}>Interests</Text>
+            <View style={styles.interestsGrid}>
+              {user.interests.map((interest, index) => (
+                <View key={index} style={styles.interestTag}>
+                  <Text style={styles.interestText}>{interest}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Add some bottom padding so last content isn't cut off */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
     </Animated.View>
   );
 }
@@ -220,23 +311,56 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Pan responder for swipe gestures
+  // Improved pan responder with better touch discrimination
   const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > 10 || Math.abs(gestureState.dy) > 10;
+    onStartShouldSetPanResponder: (evt, gestureState) => {
+      // Calculate the image section height (approximately 60% of card height)
+      const imageHeight = CARD_HEIGHT * 0.6;
+      const { locationY } = evt.nativeEvent;
+      
+      // Only respond to touches in the image area
+      if (locationY > imageHeight) return false;
+      
+      return false; // Let onMoveShouldSetPanResponder handle the decision
     },
+    
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      // Calculate the image section height (approximately 60% of card height)
+      const imageHeight = CARD_HEIGHT * 0.6;
+      const { locationY } = evt.nativeEvent;
+      
+      // Only respond to touches in the image area
+      if (locationY > imageHeight) return false;
+      
+      // Require significant horizontal movement compared to vertical
+      const { dx, dy } = gestureState;
+      const horizontalDistance = Math.abs(dx);
+      const verticalDistance = Math.abs(dy);
+      
+      // Only respond if:
+      // 1. Horizontal movement is greater than vertical movement
+      // 2. Horizontal movement is significant (> 20px)
+      // 3. The ratio of horizontal to vertical movement is > 1.5
+      return (
+        horizontalDistance > verticalDistance &&
+        horizontalDistance > 20 &&
+        (verticalDistance === 0 || horizontalDistance / verticalDistance > 1.5)
+      );
+    },
+    
     onPanResponderGrant: () => {
       position.setOffset({
         x: position.x._value,
         y: position.y._value,
       });
     },
+    
     onPanResponderMove: (_, gestureState) => {
-      position.setValue({ x: gestureState.dx, y: gestureState.dy });
+      // Only update x position for horizontal swipes, keep y at 0
+      position.setValue({ x: gestureState.dx, y: 0 });
       
-      // Scale effect based on drag distance
-      const dragDistance = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
+      // Scale effect based on horizontal drag distance only
+      const dragDistance = Math.abs(gestureState.dx);
       const scaleValue = Math.max(0.95, 1 - dragDistance / 1000);
       scale.setValue(scaleValue);
 
@@ -245,6 +369,7 @@ export default function HomeScreen({ navigation }) {
       nextCardScale.setValue(0.9 + (0.05 * progress));
       nextCardOpacity.setValue(0.5 + (0.3 * progress));
     },
+    
     onPanResponderRelease: (_, gestureState) => {
       position.flattenOffset();
       
@@ -468,7 +593,7 @@ export default function HomeScreen({ navigation }) {
               ← Swipe left to pass • Swipe right to like →
             </Text>
             <Text style={styles.instructionText}>
-              Tap edges of photo to see more
+              Tap edges of photo to see more • Scroll content area to read more
             </Text>
           </View>
         )}
@@ -661,10 +786,73 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     transform: [{ scale: 1.2 }],
   },
-  infoSection: {
+  infoScrollView: {
     flex: 1,
+    backgroundColor: 'transparent',
+  },
+  infoScrollContent: {
     padding: 20,
-    justifyContent: 'flex-start',
+    paddingBottom: 10,
+  },
+  promptsContainer: {
+    marginTop: 8,
+  },
+  promptContainer: {
+    marginBottom: 12,
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#6C5CE7',
+  },
+  promptQuestion: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  promptAnswer: {
+    fontSize: 14,
+    color: '#555',
+    lineHeight: 20,
+  },
+  bioContainer: {
+    marginTop: 15,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 8,
+  },
+  bioText: {
+    fontSize: 14,
+    color: '#555',
+    lineHeight: 20,
+  },
+  interestsContainer: {
+    marginTop: 15,
+  },
+  interestsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  interestTag: {
+    backgroundColor: '#e8f0fe',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  interestText: {
+    fontSize: 12,
+    color: '#1976d2',
+    fontWeight: '500',
+  },
+  bottomPadding: {
+    height: 20,
   },
   nameRow: {
     flexDirection: 'row',

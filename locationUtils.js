@@ -11,7 +11,7 @@ export const updateUserLocation = async () => {
     const user = auth.currentUser;
     if (!user) return;
 
-    // ✅ Skip location updates in testing mode
+    // Skip location updates in testing mode
     if (TESTING_MODE) {
       console.log("🧪 Testing mode: Skipping real location update");
       return;
