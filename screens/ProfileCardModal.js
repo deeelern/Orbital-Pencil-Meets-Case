@@ -109,39 +109,80 @@ export default function ProfileCardModal({ visible, onClose, user }) {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [showLikes, setShowLikes] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
   const scrollRef = useRef(null);
 
   const screenWidth = Dimensions.get('window').width;
-  const modalWidth = screenWidth * 0.9;
+  const screenHeight = Dimensions.get('window').height;
+  const modalWidth = screenWidth * 0.95;
+  const modalHeight = screenHeight * 0.85;
 
   const position = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
 
+  // Improved panResponder with better touch discrimination
   const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > 10 || Math.abs(gestureState.dy) > 10;
+    onStartShouldSetPanResponder: (evt, gestureState) => {
+      // Don't intercept if user is actively scrolling
+      if (isScrolling) return false;
+      
+      // Only respond to touches in the image area (top 400px)
+      const { locationY } = evt.nativeEvent;
+      if (locationY > 400) return false;
+      
+      // Require some initial movement to distinguish from taps
+      return false;
     },
+    
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      // Don't intercept if user is actively scrolling
+      if (isScrolling) return false;
+      
+      // Only respond to touches in the image area
+      const { locationY } = evt.nativeEvent;
+      if (locationY > 400) return false;
+      
+      // Require significant horizontal movement compared to vertical
+      const { dx, dy } = gestureState;
+      const horizontalDistance = Math.abs(dx);
+      const verticalDistance = Math.abs(dy);
+      
+      // Only respond if:
+      // 1. Horizontal movement is greater than vertical movement
+      // 2. Horizontal movement is significant (> 20px)
+      // 3. The ratio of horizontal to vertical movement is > 1.5
+      return (
+        horizontalDistance > verticalDistance &&
+        horizontalDistance > 20 &&
+        (verticalDistance === 0 || horizontalDistance / verticalDistance > 1.5)
+      );
+    },
+    
     onPanResponderGrant: () => {
       position.setOffset({
         x: position.x._value,
         y: position.y._value,
       });
     },
+    
     onPanResponderMove: (_, gestureState) => {
-      position.setValue({ x: gestureState.dx, y: gestureState.dy });
+      // Only update x position for horizontal swipes, keep y at 0
+      position.setValue({ x: gestureState.dx, y: 0 });
       
-      // Scale effect based on drag distance
-      const dragDistance = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
+      // Scale effect based on horizontal drag distance only
+      const dragDistance = Math.abs(gestureState.dx);
       const scaleValue = Math.max(0.95, 1 - dragDistance / 1000);
       scale.setValue(scaleValue);
     },
+    
     onPanResponderRelease: (_, gestureState) => {
       position.flattenOffset();
       
-      if (gestureState.dx > 120) {
+      const swipeThreshold = 120;
+      
+      if (gestureState.dx > swipeThreshold) {
         handleSwipeRight();
-      } else if (gestureState.dx < -120) {
+      } else if (gestureState.dx < -swipeThreshold) {
         handleSwipeLeft();
       } else {
         // Snap back to center
@@ -265,6 +306,23 @@ export default function ProfileCardModal({ visible, onClose, user }) {
     setShowLikes(true);
   };
 
+  // ScrollView event handlers to track scrolling state
+  const handleScrollBeginDrag = () => {
+    setIsScrolling(true);
+  };
+
+  const handleScrollEndDrag = () => {
+    setIsScrolling(false);
+  };
+
+  const handleMomentumScrollBegin = () => {
+    setIsScrolling(true);
+  };
+
+  const handleMomentumScrollEnd = () => {
+    setIsScrolling(false);
+  };
+
   return (
     <>
       <Modal visible={visible} transparent animationType="slide">
@@ -274,6 +332,7 @@ export default function ProfileCardModal({ visible, onClose, user }) {
               styles.modalContainer,
               { 
                 width: modalWidth,
+                height: modalHeight,
                 transform: [
                   { translateX: position.x },
                   { translateY: position.y },
@@ -339,8 +398,17 @@ export default function ProfileCardModal({ visible, onClose, user }) {
               </View>
             )}
 
-            {/* Profile Info */}
-            <View style={styles.profileInfo}>
+            {/* Profile Info with ScrollView */}
+            <ScrollView
+              ref={scrollRef}
+              style={styles.profileInfo}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+              onScrollBeginDrag={handleScrollBeginDrag}
+              onScrollEndDrag={handleScrollEndDrag}
+              onMomentumScrollBegin={handleMomentumScrollBegin}
+              onMomentumScrollEnd={handleMomentumScrollEnd}
+            >
               <View style={styles.nameRow}>
                 <Text style={styles.nameText}>
                   {user.firstName} {user.lastName}
@@ -375,7 +443,29 @@ export default function ProfileCardModal({ visible, onClose, user }) {
                   ))}
                 </>
               )}
-            </View>
+
+              {/* Additional Bio/About section if available */}
+              {user.bio && (
+                <View style={styles.bioContainer}>
+                  <Text style={styles.sectionTitle}>About</Text>
+                  <Text style={styles.bioText}>{user.bio}</Text>
+                </View>
+              )}
+
+              {/* Interests if available */}
+              {user.interests && user.interests.length > 0 && (
+                <View style={styles.interestsContainer}>
+                  <Text style={styles.sectionTitle}>Interests</Text>
+                  <View style={styles.interestsGrid}>
+                    {user.interests.map((interest, index) => (
+                      <View key={index} style={styles.interestTag}>
+                        <Text style={styles.interestText}>{interest}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </ScrollView>
 
             {/* Swipe Instructions */}
             <View style={styles.swipeInstructions}>
@@ -405,12 +495,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)'
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 40,
   },
   modalContainer: {
     backgroundColor: '#fff',
     borderRadius: 20,
-    maxHeight: '90%',
     overflow: 'hidden',
     elevation: 10,
     shadowColor: '#000',
@@ -494,8 +584,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
   },
   profileInfo: {
+    flex: 1,
     padding: 20,
     paddingTop: 10,
+    minHeight: 300,
   },
   nameRow: {
     flexDirection: 'row',
@@ -547,6 +639,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#555',
     lineHeight: 20,
+  },
+  bioContainer: {
+    marginTop: 15,
+  },
+  bioText: {
+    fontSize: 15,
+    color: '#555',
+    lineHeight: 20,
+  },
+  interestsContainer: {
+    marginTop: 15,
+  },
+  interestsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  interestTag: {
+    backgroundColor: '#e8f0fe',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  interestText: {
+    fontSize: 12,
+    color: '#1976d2',
+    fontWeight: '500',
   },
   swipeInstructions: {
     paddingHorizontal: 20,
