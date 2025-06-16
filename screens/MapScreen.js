@@ -105,6 +105,7 @@ function MyLikesModal({ visible, onClose, likes }) {
 export default function MapScreen() {
   const [region, setRegion] = useState(NUS_CENTER);
   const [nearbyUsers, setNearbyUsers] = useState([]);
+  const [myGenderPreference, setMyGenderPreference] = useState('Everyone');
   const [myLikes, setMyLikes] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -113,6 +114,8 @@ export default function MapScreen() {
   const [mapReady, setMapReady] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
   const navigation = useNavigation();
+  const [matchModalVisible, setMatchModalVisible] = useState(false);
+  const [matchedUser, setMatchedUser] = useState(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -133,6 +136,14 @@ export default function MapScreen() {
   useEffect(() => {
     // nearbyUsers state updated
   }, [nearbyUsers, mapReady, dataFetched]);
+
+  const fetchMyPreferences = async () => {
+    const currentUserDoc = await getDoc(doc(db, 'users', auth.currentUser?.uid));
+      if (currentUserDoc.exists()) {
+        const pref = currentUserDoc.data()?.genderPreference;
+      if (pref) setMyGenderPreference(pref);
+    }
+  };
 
   const initializeMap = async () => {
     try {
@@ -161,6 +172,8 @@ export default function MapScreen() {
       };
       
       setRegion(newRegion);
+
+      await fetchMyPreferences();
       
       // Fetch users and mark data as fetched
       await fetchNearbyUsers(latitude, longitude);
@@ -173,7 +186,43 @@ export default function MapScreen() {
     }
   };
 
+  const shouldIncludeBasedOnGenderPreference = (userData, currentUser) => {
+    const myGender = currentUser.gender?.toLowerCase();
+    const myPref = normalizePreference(currentUser.preferences?.gender);
+
+    const theirGender = userData.gender?.toLowerCase();
+    const theirPref = normalizePreference(userData.preferences?.gender);
+
+    if (!myGender || !theirGender || !myPref || !theirPref) return false;
+
+    const iMatchTheirPref = theirPref.includes(myGender);
+    const theyMatchMyPref = myPref.includes(theirGender);
+
+    return iMatchTheirPref && theyMatchMyPref;
+  };
+
+  const normalizePreference = (pref) => {
+    if (!pref) return [];
+
+    if (Array.isArray(pref)) {
+      return pref.map(p => p.toLowerCase());
+    }
+
+    if (typeof pref === 'string') {
+      const val = pref.toLowerCase();
+      if (val === 'everyone' || val === 'all' || val === 'both') {
+        return ['male', 'female', 'other'];
+      }
+      return [val];
+    }
+    return [];
+  };
+
   const fetchNearbyUsers = async (lat, lon) => {
+
+    const currentUserDoc = await getDoc(doc(db, 'users', auth.currentUser?.uid));
+    const currentUser = currentUserDoc.exists() ? currentUserDoc.data() : null;
+    
     try {
       const q = query(collection(db, 'users'));
       const snapshot = await getDocs(q);
@@ -225,6 +274,7 @@ export default function MapScreen() {
         const preference = userData.preferences?.distanceKm ?? 50;
 
         if (distance <= preference) {
+          if (!shouldIncludeBasedOnGenderPreference(userData, currentUser)) return;
           users.push({ id: docSnap.id, ...userData, distance, userLat, userLon });
         }
       });
@@ -366,10 +416,12 @@ export default function MapScreen() {
       )}
 
       {/* Profile Modal */}
-      <ProfileCardModal 
-        visible={modalVisible} 
-        onClose={handleProfileCardClose} 
-        user={selectedUser} 
+      <ProfileCardModal
+        visible={modalVisible}
+        onClose={handleProfileCardClose}
+        user={selectedUser}
+        showMatchModal={setMatchModalVisible}
+        setMatchedUser={setMatchedUser}
       />
 
       {/* My Likes Modal */}
@@ -378,6 +430,23 @@ export default function MapScreen() {
         onClose={() => setShowMyLikes(false)}
         likes={myLikes}
       />
+
+      <Modal visible={matchModalVisible} transparent animationType="fade">
+        <View style={styles.matchOverlay}>
+          <View style={styles.matchContainer}>
+            <Text style={styles.matchTitle}>🎉 It's a Match! 🎉</Text>
+            {matchedUser?.photos && matchedUser.photos.length > 0 && (
+              <Image source={{ uri: matchedUser.photos[0] }} style={styles.matchImage} />
+            )}
+            <Text style={styles.matchText}>
+              You and {matchedUser?.firstName} liked each other!
+            </Text>
+            <TouchableOpacity onPress={() => setMatchModalVisible(false)} style={styles.matchCloseBtn}>
+              <Text style={styles.matchCloseText}>Great!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -527,6 +596,53 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 10,
     alignItems: 'center',
+  },
+  matchOverlay: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  matchContainer: {
+    width: '85%',
+    padding: 30,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
+  matchTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#ff4458',
+  },
+  matchImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 15,
+  },
+  matchText: {
+    fontSize: 18,
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 20,
+  },
+  matchCloseBtn: {
+    backgroundColor: '#ff4458',
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 20,
+  },
+  matchCloseText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   blurredImageContainer: {
     width: 100,

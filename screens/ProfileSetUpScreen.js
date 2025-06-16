@@ -72,8 +72,6 @@ function SectionHeader({ title, subtitle, icon }) {
 
 export default function ProfileSetupScreen({ navigation, route }) {
   const params = route?.params || {};
-
-  const [datePref, setDatePref] = useState(params.datePref || null);
   
   const [dob, setDob] = useState(() => {
     if (!params.dateOfBirth) return new Date();
@@ -123,7 +121,6 @@ export default function ProfileSetupScreen({ navigation, route }) {
     let filled = 0;
     const total = 10;
     
-    if (datePref) filled++;
     if (dob && checkIs18(dob)) filled++;
     if (firstName.trim() && lastName.trim()) filled++;
     if (myGender) filled++;
@@ -138,7 +135,6 @@ export default function ProfileSetupScreen({ navigation, route }) {
   };
 
   const handleDone = async () => {
-    if (!datePref) return Alert.alert('Missing field', 'Please choose who you want to date.');
     if (!firstName.trim() || !lastName.trim()) return Alert.alert('Missing name', 'Please enter both your first and last name.');
     if (!myGender) return Alert.alert('Missing gender', 'Please select your gender.');
     if (!degree) return Alert.alert('Missing degree', 'Please select your highest degree.');
@@ -154,7 +150,6 @@ export default function ProfileSetupScreen({ navigation, route }) {
       fromMeScreen: route?.params?.fromMeScreen || false,
       prompts: route?.params.prompts || [],
       profile: {
-        datePref,
         dateOfBirth: dob.toISOString(),
         firstName,
         lastName,
@@ -191,29 +186,6 @@ export default function ProfileSetupScreen({ navigation, route }) {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-
-          {/* Dating Preference */}
-          <View style={styles.section}>
-            <SectionHeader 
-              title="Who do you want to date?" 
-              icon="heart"
-            />
-            <View style={styles.optionsContainer}>
-              {[
-                { label: 'Women', icon: 'woman' },
-                { label: 'Men', icon: 'man' },
-                { label: 'Everyone', icon: 'people' }
-              ].map(opt => (
-                <ModernRadio 
-                  key={opt.label} 
-                  label={opt.label} 
-                  icon={opt.icon}
-                  selected={datePref === opt.label} 
-                  onPress={() => setDatePref(opt.label)} 
-                />
-              ))}
-            </View>
-          </View>
 
           {/* Birthday */}
           <View style={styles.section}>

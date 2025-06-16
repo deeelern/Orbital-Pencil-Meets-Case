@@ -92,12 +92,9 @@ export default function MeScreen({ navigation }) {
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('Home');
-    }
+    navigation.navigate('Home');
   };
+  
   const handleSettings = () => navigation.navigate('Settings', { from: 'Me' });
 
   if (loading) {
@@ -210,7 +207,7 @@ export default function MeScreen({ navigation }) {
         <View style={styles.promptsSection}>
           <Text style={styles.sectionTitle}>Looking For</Text>
           <Text style={styles.detailText}>
-            Interested in: {userProfile.datePref || 'Not specified'}
+            Interested in: {userProfile.preferences?.gender || 'Not specified'}
           </Text>
         </View>
       </ScrollView>
