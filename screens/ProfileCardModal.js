@@ -16,6 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { db, auth } from '../FirebaseConfig';
 import { doc, updateDoc, arrayUnion, getDoc, arrayRemove } from 'firebase/firestore';
+import { handleLike } from '../utils/handleLike';
 
 // Likes Modal Component
 function LikesModal({ visible, onClose, user }) {
@@ -104,7 +105,7 @@ function LikesModal({ visible, onClose, user }) {
   );
 }
 
-export default function ProfileCardModal({ visible, onClose, user }) {
+export default function ProfileCardModal({ visible, onClose, user, showMatchModal, setMatchedUser }) {
   if (!user) return null;
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -201,7 +202,6 @@ export default function ProfileCardModal({ visible, onClose, user }) {
   });
 
   const handleSwipeRight = async () => {
-    // Animate card off screen to the right
     Animated.parallel([
       Animated.timing(position, {
         toValue: { x: screenWidth, y: 0 },
@@ -215,52 +215,17 @@ export default function ProfileCardModal({ visible, onClose, user }) {
       })
     ]).start(async () => {
       try {
-        const currentUserId = auth.currentUser?.uid;
-        if (!currentUserId) {
-          throw new Error('User not authenticated');
-        }
-
-        // Check if we already liked this user
-        const userDocRef = doc(db, 'users', user.id);
-        const userDocSnap = await getDoc(userDocRef);
-        
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          const currentLikes = userData.likes || [];
-          
-          if (currentLikes.includes(currentUserId)) {
-            Alert.alert('Already Liked', 'You have already liked this profile!');
-          } else {
-            // Add current user's ID to the viewed user's likes array
-            await updateDoc(userDocRef, {
-              likes: arrayUnion(currentUserId)
-            });
-            
-            Alert.alert('👍', 'You liked this profile!', [
-              { text: 'OK', onPress: () => {} }
-            ]);
-          }
-        } else {
-          // User document doesn't exist, create the likes array
-          await updateDoc(userDocRef, {
-            likes: [currentUserId]
-          });
-          
-          Alert.alert('👍', 'You liked this profile!', [
-            { text: 'OK', onPress: () => {} }
-          ]);
-        }
+        await handleLike(user, showMatchModal, setMatchedUser);
       } catch (err) {
-        console.error('Error liking user:', err);
+        console.error('Error handling like:', err);
         Alert.alert('Error', `Failed to like profile: ${err.message}`);
       }
-      
-      // Reset position and close modal
       position.setValue({ x: 0, y: 0 });
       scale.setValue(1);
       onClose();
     });
   };
+
 
   const handleSwipeLeft = () => {
     // Animate card off screen to the left
@@ -672,12 +637,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 15,
     alignItems: 'center',
+    marginVertical: -6,
   },
   instructionText: {
     fontSize: 12,
     color: '#999',
     textAlign: 'center',
-    marginVertical: 1,
+    marginVertical: -2.5,
   },
   
   // Likes Modal Styles

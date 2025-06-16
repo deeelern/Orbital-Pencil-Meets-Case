@@ -10,17 +10,121 @@ import {
   Dimensions,
   PanResponder,
   Animated,
-  Alert
+  Alert,
+  Modal,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db, auth } from '../FirebaseConfig';
 import { doc, getDoc, collection, getDocs, query, where, updateDoc, arrayUnion } from 'firebase/firestore';
 import { updateUserLocation } from '../locationUtils';
+import { handleLike } from '../utils/handleLike';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.9;
 const CARD_HEIGHT = screenHeight * 0.7;
+
+// Likes Modal Component for HomeScreen
+function LikesModal({ visible, onClose, currentUserId }) {
+  const [likedUsers, setLikedUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchUsersWhoLikedMe = async () => {
+    if (!currentUserId) return;
+    
+    setLoading(true);
+    try {
+      // Get current user's data to check their likes array
+      const currentUserDoc = await getDoc(doc(db, 'users', currentUserId));
+      if (!currentUserDoc.exists()) return;
+      
+      const currentUserData = currentUserDoc.data();
+      const userLikes = currentUserData.likes || [];
+      
+      if (userLikes.length === 0) {
+        setLikedUsers([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Fetch user data for each user who liked the current user
+      const userPromises = userLikes.map(async (userId) => {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          return { id: userId, ...userDoc.data() };
+        }
+        return null;
+      });
+      
+      const users = await Promise.all(userPromises);
+      setLikedUsers(users.filter(u => u !== null));
+    } catch (error) {
+      console.error('Error fetching users who liked me:', error);
+      Alert.alert('Error', 'Failed to load users who liked you');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (visible) {
+      fetchUsersWhoLikedMe();
+    }
+  }, [visible, currentUserId]);
+
+  const renderLikedUser = ({ item }) => (
+    <View style={styles.likedUserCard}>
+      <View style={styles.blurredImageContainer}>
+        <Image
+          source={{ uri: item.photos?.[0] || 'https://via.placeholder.com/100' }}
+          style={styles.blurredImage}
+          blurRadius={15}
+        />
+        <View style={styles.blurOverlay}>
+          <Ionicons name="heart" size={24} color="#ff4458" />
+        </View>
+      </View>
+      <Text style={styles.blurredName}>
+        {item.firstName?.[0] || '?'}***
+      </Text>
+    </View>
+  );
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={styles.likesOverlay}>
+        <View style={styles.likesContainer}>
+          <View style={styles.likesHeader}>
+            <Text style={styles.likesTitle}>People who liked you</Text>
+            <TouchableOpacity onPress={onClose} style={styles.likesCloseButton}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          
+          {loading ? (
+            <Text style={styles.loadingText}>Loading...</Text>
+          ) : likedUsers.length === 0 ? (
+            <View style={styles.noLikesContainer}>
+              <Ionicons name="heart-outline" size={50} color="#ccc" />
+              <Text style={styles.noLikesText}>No likes yet</Text>
+              <Text style={styles.noLikesSubText}>Keep exploring to find matches!</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={likedUsers}
+              renderItem={renderLikedUser}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              contentContainerStyle={styles.likedUsersList}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 // Individual Swipe Card Component
 // Updated SwipeCard Component with improved touch handling
@@ -251,6 +355,9 @@ export default function HomeScreen({ navigation }) {
   const [users, setUsers] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [currentUserData, setCurrentUserData] = useState(null);
+  const [likesCount, setLikesCount] = useState(0);
+  const [showLikes, setShowLikes] = useState(false);
 
   // Animation values
   const position = useRef(new Animated.ValueXY()).current;
@@ -258,8 +365,8 @@ export default function HomeScreen({ navigation }) {
   const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const nextCardOpacity = useRef(new Animated.Value(0.5)).current;
 
-  // Fetch user's locationSharing setting from Firestore
-  const fetchLocationSetting = async () => {
+  // Fetch current user data and their likes count
+  const fetchCurrentUserData = async () => {
     try {
       const user = auth.currentUser;
       if (!user) return;
@@ -267,49 +374,129 @@ export default function HomeScreen({ navigation }) {
       const docSnap = await getDoc(doc(db, 'users', user.uid));
       if (docSnap.exists()) {
         const userData = docSnap.data();
+        setCurrentUserData(userData);
         setLocationSharing(userData.settings?.locationSharing ?? true);
+        
+        // Count how many people liked this user
+        const userLikes = userData.likes || [];
+        setLikesCount(userLikes.length);
       }
     } catch (error) {
-      console.error('Error fetching location setting:', error);
+      console.error('Error fetching current user data:', error);
     }
   };
 
-  // Fetch users to display
-  const fetchUsers = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
+const filterUsersByGenderPreference = (allUsers, currentUserData) => {
+  if (!currentUserData || !currentUserData.gender || !currentUserData.preferences?.gender) {
+    return allUsers;
+  }
 
-      // Get all users except current user
-      const usersQuery = query(
-        collection(db, 'users'),
-        where('__name__', '!=', currentUser.uid)
-      );
-      
-      const querySnapshot = await getDocs(usersQuery);
-      const fetchedUsers = [];
-      
-      querySnapshot.forEach((doc) => {
-        const userData = doc.data();
-        // Only include users with basic profile info
-        if (userData.firstName && userData.lastName) {
-          fetchedUsers.push({
-            id: doc.id,
-            ...userData
-          });
-        }
-      });
+  const myGender = currentUserData.gender.toLowerCase();
+  const myPreference = normalizePreference(currentUserData.preferences.gender);
 
-      // Shuffle the users for random order
-      const shuffledUsers = fetchedUsers.sort(() => Math.random() - 0.5);
-      setUsers(shuffledUsers);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setLoading(false);
-      Alert.alert('Error', 'Failed to load profiles');
+  return allUsers.filter(user => {
+    const theirGender = user.gender?.toLowerCase();
+    const theirPref = normalizePreference(user.preferences?.gender);
+
+    if (!theirGender || !theirPref) return false;
+
+    // Mutual gender preference match
+    const iMatchTheirPref = theirPref.includes(myGender);
+    const theyMatchMyPref = myPreference.includes(theirGender);
+
+    return iMatchTheirPref && theyMatchMyPref;
+  });
+};
+
+const normalizePreference = (pref) => {
+  if (!pref) return [];
+
+  if (Array.isArray(pref)) {
+    return pref.map(p => p.toLowerCase());
+  }
+
+  if (typeof pref === 'string') {
+    const val = pref.toLowerCase();
+    if (val === 'everyone' || val === 'all' || val === 'both') {
+      return ['male', 'female', 'other'];
     }
-  };
+    return [val];
+  }
+
+  return [];
+};
+
+// additional filter to remove users you've already interacted with
+const filterOutAlreadyInteractedUsers = (users, currentUserData) => {
+  if (!currentUserData) return users;
+
+  // Get arrays of users the current user has already liked or disliked
+  const alreadyLiked = currentUserData.likedUsers || [];
+  const alreadyDisliked = currentUserData.dislikedUsers || [];
+  const alreadyInteracted = [...alreadyLiked, ...alreadyDisliked];
+
+  return users.filter(user => !alreadyInteracted.includes(user.id));
+};
+
+const fetchUsers = async () => {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !currentUserData) return;
+
+    console.log('Fetching users for:', currentUserData.firstName, 'Gender:', currentUserData.gender, 'Preferences:', currentUserData.preferences?.gender);
+
+    // Get all users except current user
+    const usersQuery = query(
+      collection(db, 'users'),
+      where('__name__', '!=', currentUser.uid)
+    );
+    
+    const querySnapshot = await getDocs(usersQuery);
+    const fetchedUsers = [];
+    
+    querySnapshot.forEach((doc) => {
+      const userData = doc.data();
+      // Only include users with basic profile info
+      if (userData.firstName && userData.lastName) {
+        fetchedUsers.push({
+          id: doc.id,
+          ...userData
+        });
+      }
+    });
+
+    console.log('Fetched users from database:', fetchedUsers.length);
+
+    // Get fresh current user data to ensure we have latest preferences
+    const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
+    if (!currentUserDoc.exists()) {
+      console.log('Current user document not found');
+      setLoading(false);
+      return;
+    }
+
+    const freshCurrentUserData = currentUserDoc.data();
+    console.log('Fresh user data for filtering:', {
+      gender: freshCurrentUserData.gender,
+      genderPreference: freshCurrentUserData.preferences?.gender
+    });
+
+    // Apply both filters with fresh data
+    let filteredUsers = filterUsersByGenderPreference(fetchedUsers, freshCurrentUserData);
+    filteredUsers = filterOutAlreadyInteractedUsers(filteredUsers, freshCurrentUserData);
+
+    console.log('Final filtered users:', filteredUsers.length);
+
+    // Shuffle the users for random order
+    const shuffledUsers = filteredUsers.sort(() => Math.random() - 0.5);
+    setUsers(shuffledUsers);
+    setLoading(false);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    setLoading(false);
+    Alert.alert('Error', 'Failed to load profiles');
+  }
+};
 
   // Improved pan responder with better touch discrimination
   const panResponder = PanResponder.create({
@@ -403,49 +590,36 @@ export default function HomeScreen({ navigation }) {
     }
   });
 
-  const handleSwipeRight = async () => {
-    const currentUser = users[currentIndex];
-    
-    // Animate card off screen to the right
-    Animated.parallel([
-      Animated.timing(position, {
-        toValue: { x: screenWidth + 100, y: 0 },
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(scale, {
-        toValue: 0.8,
-        duration: 300,
-        useNativeDriver: false,
-      })
-    ]).start(async () => {
-      try {
-        const currentUserId = auth.currentUser?.uid;
-        if (!currentUserId || !currentUser) {
-          throw new Error('User not authenticated');
-        }
+const [matchModalVisible, setMatchModalVisible] = useState(false);
+const [matchedUser, setMatchedUser] = useState(null);
 
-        // Add like to the user's profile
-        const userDocRef = doc(db, 'users', currentUser.id);
-        const userDocSnap = await getDoc(userDocRef);
-        
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          const currentLikes = userData.likes || [];
-          
-          if (!currentLikes.includes(currentUserId)) {
-            await updateDoc(userDocRef, {
-              likes: arrayUnion(currentUserId)
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Error liking user:', err);
-      }
-      
-      moveToNextCard();
-    });
-  };
+const handleSwipeRight = async () => {
+  const swipedUser = users[currentIndex];
+  if (!swipedUser) return;
+
+  // Animate card off screen to the right
+  Animated.parallel([
+    Animated.timing(position, {
+      toValue: { x: screenWidth + 100, y: 0 },
+      duration: 300,
+      useNativeDriver: false,
+    }),
+    Animated.timing(scale, {
+      toValue: 0.8,
+      duration: 300,
+      useNativeDriver: false,
+    })
+  ]).start(async () => {
+    try {
+      await handleLike(swipedUser, setMatchModalVisible, setMatchedUser);
+    } catch (err) {
+      console.error('Error during swipe right:', err);
+    }
+
+    moveToNextCard();
+  });
+};
+
 
   const handleSwipeLeft = () => {
     // Animate card off screen to the left
@@ -476,11 +650,21 @@ export default function HomeScreen({ navigation }) {
     setCurrentIndex(prev => prev + 1);
   };
 
-  // Load locationSharing preference on mount
+  const handleLikesPress = () => {
+    setShowLikes(true);
+  };
+
+  // Load user data first, then fetch users
   useEffect(() => {
-    fetchLocationSetting();
-    fetchUsers();
+    fetchCurrentUserData();
   }, []);
+
+  // Fetch users after current user data is loaded
+  useEffect(() => {
+    if (currentUserData) {
+      fetchUsers();
+    }
+  }, [currentUserData]);
 
   // Update location if sharing is enabled
   useEffect(() => {
@@ -506,9 +690,18 @@ export default function HomeScreen({ navigation }) {
           <Ionicons name="home-outline" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Discover</Text>
-        <TouchableOpacity onPress={handleSettings} style={styles.headerButton}>
-          <Ionicons name="settings-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          {/* Likes Counter */}
+          {likesCount > 0 && (
+            <TouchableOpacity onPress={handleLikesPress} style={styles.likesHeaderButton}>
+              <Ionicons name="heart" size={20} color="#fff" />
+              <Text style={styles.likesHeaderCount}>{likesCount}</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={handleSettings} style={styles.headerButton}>
+            <Ionicons name="settings-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       <View style={styles.body}>
@@ -599,6 +792,18 @@ export default function HomeScreen({ navigation }) {
         )}
       </View>
 
+        <Modal visible={matchModalVisible} transparent animationType="fade">
+          <View style={styles.matchOverlay}>
+            <View style={styles.matchPopup}>
+              <Text style={styles.matchText}>🎉 It's a match!</Text>
+              <Text>You and {matchedUser?.firstName} can now chat!</Text>
+              <TouchableOpacity onPress={() => setMatchModalVisible(false)}>
+                <Text style={styles.closeButton}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
       <View style={styles.bottomPanel}>
         <TouchableOpacity style={styles.tabButton} onPress={() => navigation.navigate('Chat')}>
           <Ionicons name="chatbubble-outline" size={22} color="#6C5CE7" />
@@ -613,6 +818,13 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.tabText}>Me</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Likes Modal */}
+      <LikesModal 
+        visible={showLikes} 
+        onClose={() => setShowLikes(false)} 
+        currentUserId={auth.currentUser?.uid} 
+      />
     </View>
   );
 }
@@ -647,6 +859,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginLeft: -40,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+    likesHeaderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  likesHeaderCount: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
   body: {
     flex: 1,
     alignItems: 'center',
@@ -661,6 +892,70 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 18,
     color: '#666',
+  },
+  blurredImageContainer: {
+  width: 120,
+  height: 120,
+  borderRadius: 60,
+  overflow: 'hidden',
+  position: 'relative',
+  },
+  blurredImage: {
+    width: '100%',
+    height: '100%',
+  },
+  blurOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  blurredName: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  likesOverlay: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0,0,0,0.5)',  // Dimmed background
+  },
+  likesContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+    height: '35%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    position: 'relative',
+  },
+  likesTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  likesCloseButton: {
+    position: 'absolute',
+    top: -5,
+    right: -75,
+    padding: 8,
+    zIndex: 10,
+  },
+  likedUsersList: {
+    paddingTop: 10,
+  },
+  likedUserCard: {
+    margin: 10,
+    alignItems: 'center',
   },
   noMoreCardsContainer: {
     alignItems: 'center',
@@ -879,6 +1174,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#ff4458',
     marginLeft: 4,
+  },
+  matchOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.6)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  },
+  matchPopup: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '80%',
+  },
+  matchText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  closeButton: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#007AFF',
   },
   infoText: {
     fontSize: 15,

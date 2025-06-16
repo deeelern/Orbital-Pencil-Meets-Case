@@ -175,21 +175,29 @@ export default function MyPreferencesScreen({ navigation, route }) {
         finalPhotos = docSnap.data()?.photos || [];
       }
 
-      const userData = {
-        ...profile,
-        prompts,
-        preferences,
-        profileCompleted: true,
-        photos: finalPhotos,
-        settings: {
-          notifications: true,
-          showOnline: true,
-          privateMode: false,
-          locationSharing: true
-        },
-        ...(email && !isEditing ? { email } : {}),
-        ...(isEditing ? {} : { createdAt: serverTimestamp() })
-      };
+    const userData = {
+      ...profile,               // firstName, lastName, gender, etc.
+      prompts,                  // any prompts you collect
+      preferences,              // e.g. { gender: 'female', ageRange: [18,30] }
+      profileCompleted: true,
+      photos: finalPhotos,      // array of download URLs
+      settings: {
+        notifications: true,
+        showOnline:     true,
+        privateMode:    false,
+        locationSharing:true,
+      },
+      // only include email on brand-new signup
+      ...(email && !isEditing ? { email } : {}),
+      // for new users, set createdAt + seenMatches; skip on edit
+      ...(isEditing
+        ? {}
+        : {
+            createdAt:    serverTimestamp(),
+            seenMatches:  []   // initialize seenMatches
+          }
+      )
+    };
 
       await setDoc(doc(db, 'users', finalUid), userData, { merge: true });
       navigation.replace(isEditing ? 'Me' : 'Home');
@@ -210,7 +218,7 @@ export default function MyPreferencesScreen({ navigation, route }) {
 
       <ScrollView contentContainerStyle={styles.content}>
         {[
-          { key: 'Gender', value: gender, editor: <RadioRow options={['Women','Men','Everyone']} value={gender} onChange={setGender} /> },
+          { key: 'Gender', value: gender, editor: <RadioRow options={['Female','Male','Everyone']} value={gender} onChange={setGender} /> },
           { key: 'Age Range', value: `${ageMin} – ${ageMax}`, editor: (
             <View style={styles.pickerRow}>
               <Picker style={styles.picker} selectedValue={ageMin} onValueChange={setAgeMin}>
