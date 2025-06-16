@@ -17,9 +17,10 @@ import ProfileSetUpPart2Screen from './screens/ProfileSetUpPart2Screen';
 import PhotoUploadScreen       from './screens/PhotoUploadScreen';
 import MyPreferencesScreen     from './screens/MyPreferencesScreen';
 import ChatScreen              from './screens/ChatScreen';
+import ChatRoomScreen          from './screens/ChatRoomScreen';
 import MapScreen               from './screens/MapScreen';
 import MeScreen                from './screens/MeScreen';
-import SettingsScreen from './screens/SettingsScreen';
+import SettingsScreen          from './screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -80,6 +81,7 @@ export default function App() {
         <Stack.Screen name="PhotoUpload" component={PhotoUploadScreen} />
         <Stack.Screen name="MyPreferences" component={MyPreferencesScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
+        <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
         <Stack.Screen name="Meet" component={MapScreen} />
         <Stack.Screen name="Me" component={MeScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
