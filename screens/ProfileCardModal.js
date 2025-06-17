@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -11,12 +11,18 @@ import {
   PanResponder,
   Animated,
   FlatList,
-  Alert
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { db, auth } from '../FirebaseConfig';
-import { doc, updateDoc, arrayUnion, getDoc, arrayRemove } from 'firebase/firestore';
-import { handleLike } from '../utils/handleLike';
+  Alert,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { db, auth } from "../FirebaseConfig";
+import {
+  doc,
+  updateDoc,
+  arrayUnion,
+  getDoc,
+  arrayRemove,
+} from "firebase/firestore";
+import { handleLike } from "../utils/handleLike";
 
 // Likes Modal Component
 function LikesModal({ visible, onClose, user }) {
@@ -25,22 +31,22 @@ function LikesModal({ visible, onClose, user }) {
 
   const fetchLikedUsers = async () => {
     if (!user?.likes || user.likes.length === 0) return;
-    
+
     setLoading(true);
     try {
       const userPromises = user.likes.map(async (userId) => {
-        const userDoc = await getDoc(doc(db, 'users', userId));
+        const userDoc = await getDoc(doc(db, "users", userId));
         if (userDoc.exists()) {
           return { id: userId, ...userDoc.data() };
         }
         return null;
       });
-      
+
       const users = await Promise.all(userPromises);
-      setLikedUsers(users.filter(u => u !== null));
+      setLikedUsers(users.filter((u) => u !== null));
     } catch (error) {
-      console.error('Error fetching liked users:', error);
-      Alert.alert('Error', 'Failed to load users who liked you');
+      console.error("Error fetching liked users:", error);
+      Alert.alert("Error", "Failed to load users who liked you");
     } finally {
       setLoading(false);
     }
@@ -56,7 +62,9 @@ function LikesModal({ visible, onClose, user }) {
     <View style={styles.likedUserCard}>
       <View style={styles.blurredImageContainer}>
         <Image
-          source={{ uri: item.photos?.[0] || 'https://via.placeholder.com/100' }}
+          source={{
+            uri: item.photos?.[0] || "https://via.placeholder.com/100",
+          }}
           style={styles.blurredImage}
           blurRadius={15}
         />
@@ -64,9 +72,7 @@ function LikesModal({ visible, onClose, user }) {
           <Ionicons name="heart" size={24} color="#ff4458" />
         </View>
       </View>
-      <Text style={styles.blurredName}>
-        {item.firstName?.[0] || '?'}***
-      </Text>
+      <Text style={styles.blurredName}>{item.firstName?.[0] || "?"}***</Text>
     </View>
   );
 
@@ -80,14 +86,16 @@ function LikesModal({ visible, onClose, user }) {
               <Ionicons name="close" size={24} color="#333" />
             </TouchableOpacity>
           </View>
-          
+
           {loading ? (
             <Text style={styles.loadingText}>Loading...</Text>
           ) : likedUsers.length === 0 ? (
             <View style={styles.noLikesContainer}>
               <Ionicons name="heart-outline" size={50} color="#ccc" />
               <Text style={styles.noLikesText}>No likes yet</Text>
-              <Text style={styles.noLikesSubText}>Keep exploring to find matches!</Text>
+              <Text style={styles.noLikesSubText}>
+                Keep exploring to find matches!
+              </Text>
             </View>
           ) : (
             <FlatList
@@ -105,7 +113,13 @@ function LikesModal({ visible, onClose, user }) {
   );
 }
 
-export default function ProfileCardModal({ visible, onClose, user, showMatchModal, setMatchedUser }) {
+export default function ProfileCardModal({
+  visible,
+  onClose,
+  user,
+  showMatchModal,
+  setMatchedUser,
+}) {
   if (!user) return null;
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -113,8 +127,8 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollRef = useRef(null);
 
-  const screenWidth = Dimensions.get('window').width;
-  const screenHeight = Dimensions.get('window').height;
+  const screenWidth = Dimensions.get("window").width;
+  const screenHeight = Dimensions.get("window").height;
   const modalWidth = screenWidth * 0.95;
   const modalHeight = screenHeight * 0.85;
 
@@ -126,28 +140,28 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
     onStartShouldSetPanResponder: (evt, gestureState) => {
       // Don't intercept if user is actively scrolling
       if (isScrolling) return false;
-      
+
       // Only respond to touches in the image area (top 400px)
       const { locationY } = evt.nativeEvent;
       if (locationY > 400) return false;
-      
+
       // Require some initial movement to distinguish from taps
       return false;
     },
-    
+
     onMoveShouldSetPanResponder: (evt, gestureState) => {
       // Don't intercept if user is actively scrolling
       if (isScrolling) return false;
-      
+
       // Only respond to touches in the image area
       const { locationY } = evt.nativeEvent;
       if (locationY > 400) return false;
-      
+
       // Require significant horizontal movement compared to vertical
       const { dx, dy } = gestureState;
       const horizontalDistance = Math.abs(dx);
       const verticalDistance = Math.abs(dy);
-      
+
       // Only respond if:
       // 1. Horizontal movement is greater than vertical movement
       // 2. Horizontal movement is significant (> 20px)
@@ -158,29 +172,29 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
         (verticalDistance === 0 || horizontalDistance / verticalDistance > 1.5)
       );
     },
-    
+
     onPanResponderGrant: () => {
       position.setOffset({
         x: position.x._value,
         y: position.y._value,
       });
     },
-    
+
     onPanResponderMove: (_, gestureState) => {
       // Only update x position for horizontal swipes, keep y at 0
       position.setValue({ x: gestureState.dx, y: 0 });
-      
+
       // Scale effect based on horizontal drag distance only
       const dragDistance = Math.abs(gestureState.dx);
       const scaleValue = Math.max(0.95, 1 - dragDistance / 1000);
       scale.setValue(scaleValue);
     },
-    
+
     onPanResponderRelease: (_, gestureState) => {
       position.flattenOffset();
-      
+
       const swipeThreshold = 120;
-      
+
       if (gestureState.dx > swipeThreshold) {
         handleSwipeRight();
       } else if (gestureState.dx < -swipeThreshold) {
@@ -195,10 +209,10 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
           Animated.spring(scale, {
             toValue: 1,
             useNativeDriver: false,
-          })
+          }),
         ]).start();
       }
-    }
+    },
   });
 
   const handleSwipeRight = async () => {
@@ -212,20 +226,19 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
         toValue: 0.8,
         duration: 300,
         useNativeDriver: false,
-      })
+      }),
     ]).start(async () => {
       try {
         await handleLike(user, showMatchModal, setMatchedUser);
       } catch (err) {
-        console.error('Error handling like:', err);
-        Alert.alert('Error', `Failed to like profile: ${err.message}`);
+        console.error("Error handling like:", err);
+        Alert.alert("Error", `Failed to like profile: ${err.message}`);
       }
       position.setValue({ x: 0, y: 0 });
       scale.setValue(1);
       onClose();
     });
   };
-
 
   const handleSwipeLeft = () => {
     // Animate card off screen to the left
@@ -239,7 +252,7 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
         toValue: 0.8,
         duration: 300,
         useNativeDriver: false,
-      })
+      }),
     ]).start(() => {
       // Reset position and close modal
       position.setValue({ x: 0, y: 0 });
@@ -251,18 +264,20 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
   // Alternative image navigation using tap zones
   const handleImageTap = (event) => {
     if (!user.photos || user.photos.length <= 1) return;
-    
+
     const { locationX } = event.nativeEvent;
     const imageWidth = modalWidth;
     const tapZoneWidth = imageWidth / 3;
-    
+
     if (locationX < tapZoneWidth) {
       // Left tap - previous image
-      const newIndex = activeIndex > 0 ? activeIndex - 1 : user.photos.length - 1;
+      const newIndex =
+        activeIndex > 0 ? activeIndex - 1 : user.photos.length - 1;
       setActiveIndex(newIndex);
     } else if (locationX > imageWidth - tapZoneWidth) {
       // Right tap - next image
-      const newIndex = activeIndex < user.photos.length - 1 ? activeIndex + 1 : 0;
+      const newIndex =
+        activeIndex < user.photos.length - 1 ? activeIndex + 1 : 0;
       setActiveIndex(newIndex);
     }
   };
@@ -295,23 +310,23 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
           <Animated.View
             style={[
               styles.modalContainer,
-              { 
+              {
                 width: modalWidth,
                 height: modalHeight,
                 transform: [
                   { translateX: position.x },
                   { translateY: position.y },
-                  { scale: scale }
-                ]
-              }
+                  { scale: scale },
+                ],
+              },
             ]}
             {...panResponder.panHandlers}
           >
             {/* Image Display with Tap Navigation */}
             <View style={styles.carouselWrapper}>
               {user.photos && user.photos.length > 0 ? (
-                <TouchableOpacity 
-                  activeOpacity={1} 
+                <TouchableOpacity
+                  activeOpacity={1}
                   onPress={handleImageTap}
                   style={styles.imageContainer}
                 >
@@ -320,15 +335,23 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
                     style={styles.profileImage}
                     resizeMode="cover"
                   />
-                  
+
                   {/* Navigation arrows overlay */}
                   {user.photos.length > 1 && (
                     <>
                       <View style={styles.leftTapZone}>
-                        <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.7)" />
+                        <Ionicons
+                          name="chevron-back"
+                          size={24}
+                          color="rgba(255,255,255,0.7)"
+                        />
                       </View>
                       <View style={styles.rightTapZone}>
-                        <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.7)" />
+                        <Ionicons
+                          name="chevron-forward"
+                          size={24}
+                          color="rgba(255,255,255,0.7)"
+                        />
                       </View>
                     </>
                   )}
@@ -341,7 +364,7 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
                   </View>
                 </View>
               )}
-              
+
               {/* Close Button */}
               <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                 <Ionicons name="close" size={28} color="#fff" />
@@ -352,12 +375,12 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
             {user.photos && user.photos.length > 1 && (
               <View style={styles.dotContainer}>
                 {user.photos.map((_, index) => (
-                  <View 
-                    key={index} 
+                  <View
+                    key={index}
                     style={[
-                      styles.dot, 
-                      activeIndex === index && styles.activeDot
-                    ]} 
+                      styles.dot,
+                      activeIndex === index && styles.activeDot,
+                    ]}
                   />
                 ))}
               </View>
@@ -379,7 +402,7 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
                   {user.firstName} {user.lastName}
                 </Text>
                 {user.likes && user.likes.length > 0 && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.likesButton}
                     onPress={handleLikesPress}
                   >
@@ -388,8 +411,10 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
                   </TouchableOpacity>
                 )}
               </View>
-              
-              <Text style={styles.subText}>{user.degree} • {user.school}</Text>
+
+              <Text style={styles.subText}>
+                {user.degree} • {user.school}
+              </Text>
               <Text style={styles.subText}>{user.jobTitle}</Text>
               <Text style={styles.subText}>Height: {user.heightCm} cm</Text>
               <Text style={styles.subText}>
@@ -402,8 +427,12 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
                   <Text style={styles.sectionTitle}>Prompts:</Text>
                   {user.prompts.map((promptObj, idx) => (
                     <View key={idx} style={styles.promptContainer}>
-                      <Text style={styles.promptQuestion}>{promptObj.prompt}</Text>
-                      <Text style={styles.promptAnswer}>{promptObj.answer}</Text>
+                      <Text style={styles.promptQuestion}>
+                        {promptObj.prompt}
+                      </Text>
+                      <Text style={styles.promptAnswer}>
+                        {promptObj.answer}
+                      </Text>
                     </View>
                   ))}
                 </>
@@ -446,10 +475,10 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
       </Modal>
 
       {/* Likes Modal */}
-      <LikesModal 
-        visible={showLikes} 
-        onClose={() => setShowLikes(false)} 
-        user={user} 
+      <LikesModal
+        visible={showLikes}
+        onClose={() => setShowLikes(false)}
+        user={user}
       />
     </>
   );
@@ -458,95 +487,95 @@ export default function ProfileCardModal({ visible, onClose, user, showMatchModa
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
     paddingVertical: 40,
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
     elevation: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
   },
   carouselWrapper: {
-    width: '100%',
-    position: 'relative',
+    width: "100%",
+    position: "relative",
     height: 400,
   },
   imageContainer: {
-    width: '100%',
+    width: "100%",
     height: 400,
-    position: 'relative',
+    position: "relative",
   },
   profileImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
   leftTapZone: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
-    width: '33%',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    width: "33%",
+    justifyContent: "center",
+    alignItems: "flex-start",
     paddingLeft: 15,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   rightTapZone: {
-    position: 'absolute',
+    position: "absolute",
     right: 0,
     top: 0,
     bottom: 0,
-    width: '33%',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
+    width: "33%",
+    justifyContent: "center",
+    alignItems: "flex-end",
     paddingRight: 15,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   noImageContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
   noImageText: {
     marginTop: 10,
-    color: '#999',
+    color: "#999",
     fontSize: 16,
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 15,
     right: 15,
     zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
     padding: 8,
     borderRadius: 20,
   },
   dotContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     paddingVertical: 10,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
     marginHorizontal: 4,
   },
   activeDot: {
-    backgroundColor: '#333',
+    backgroundColor: "#333",
   },
   profileInfo: {
     flex: 1,
@@ -555,54 +584,54 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
   nameRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 5,
   },
   nameText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     flex: 1,
   },
   likesButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffe8ea',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ffe8ea",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 15,
   },
   likesCount: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#ff4458',
+    fontWeight: "600",
+    color: "#ff4458",
     marginLeft: 4,
   },
   subText: {
     fontSize: 16,
-    color: '#555',
+    color: "#555",
     marginVertical: 2,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 15,
     marginBottom: 5,
   },
   promptContainer: {
     marginVertical: 5,
-    width: '100%',
+    width: "100%",
   },
   promptQuestion: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
+    fontWeight: "600",
+    color: "#222",
     marginBottom: 3,
   },
   promptAnswer: {
     fontSize: 15,
-    color: '#555',
+    color: "#555",
     lineHeight: 20,
   },
   bioContainer: {
@@ -610,18 +639,18 @@ const styles = StyleSheet.create({
   },
   bioText: {
     fontSize: 15,
-    color: '#555',
+    color: "#555",
     lineHeight: 20,
   },
   interestsContainer: {
     marginTop: 15,
   },
   interestsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   interestTag: {
-    backgroundColor: '#e8f0fe',
+    backgroundColor: "#e8f0fe",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -630,71 +659,71 @@ const styles = StyleSheet.create({
   },
   interestText: {
     fontSize: 12,
-    color: '#1976d2',
-    fontWeight: '500',
+    color: "#1976d2",
+    fontWeight: "500",
   },
   swipeInstructions: {
     paddingHorizontal: 20,
     paddingBottom: 15,
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: -6,
   },
   instructionText: {
     fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
+    color: "#999",
+    textAlign: "center",
     marginVertical: -2.5,
   },
-  
+
   // Likes Modal Styles
   likesOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   likesContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 20,
-    width: '90%',
-    maxHeight: '80%',
+    width: "90%",
+    maxHeight: "80%",
     padding: 20,
   },
   likesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   likesTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333'
+    fontWeight: "bold",
+    color: "#333",
   },
   likesCloseButton: {
     padding: 5,
   },
   loadingText: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginTop: 20,
   },
   noLikesContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 40,
   },
   noLikesText: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 18,
-    color: '#666',
+    color: "#666",
     marginTop: 15,
-    fontWeight: '600'
+    fontWeight: "600",
   },
   noLikesSubText: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 14,
-    color: '#999',
+    color: "#999",
     marginTop: 5,
   },
   likedUsersList: {
@@ -703,33 +732,33 @@ const styles = StyleSheet.create({
   likedUserCard: {
     flex: 1,
     margin: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   blurredImageContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    overflow: 'hidden',
-    position: 'relative',
+    overflow: "hidden",
+    position: "relative",
   },
   blurredImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   blurOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255,255,255,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   blurredName: {
     marginTop: 8,
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
 });

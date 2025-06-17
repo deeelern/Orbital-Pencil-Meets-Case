@@ -1,56 +1,65 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from "react-native";
 
 export default function LoginScreen({ onLogin, navigation }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image 
-          source={require('../assets/logo.png')} 
+        <Image
+          source={require("../assets/logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
       </View>
-      
+
       <Text style={styles.title}>Welcome back</Text>
-      
-      <TextInput 
-        placeholder="Email" 
-        style={styles.input} 
-        keyboardType="email-address" 
+
+      <TextInput
+        placeholder="Email"
+        style={styles.input}
+        keyboardType="email-address"
         autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
       />
-      
-      <TextInput 
-        placeholder="Password" 
-        style={styles.input} 
-        secureTextEntry 
+
+      <TextInput
+        placeholder="Password"
+        style={styles.input}
+        secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
-      
-      <TouchableOpacity 
-        style={styles.loginButton} 
+
+      <TouchableOpacity
+        style={styles.loginButton}
         activeOpacity={0.8}
         onPress={() => onLogin(email, password)}
       >
         <Text style={styles.loginButtonText}>Log In</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity style={styles.forgotPasswordContainer}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.signupContainer}
-        onPress={() => navigation.navigate('SignUp')}>
+      <TouchableOpacity
+        style={styles.signupContainer}
+        onPress={() => navigation.navigate("SignUp")}
+      >
         <Text style={styles.signupText}>Don’t have an account? Sign Up</Text>
       </TouchableOpacity>
-    </View>      
+    </View>
   );
 }
 
@@ -58,11 +67,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    backgroundColor: "#fff",
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   logo: {
@@ -71,13 +80,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
     marginBottom: 16,
@@ -85,32 +94,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     height: 50,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 10,
   },
   loginButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   forgotPasswordContainer: {
     marginTop: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   forgotPasswordText: {
-    color: '#666',
+    color: "#666",
     fontSize: 14,
   },
   signupContainer: {
     marginTop: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   signupText: {
-    color: '#007AFF',
+    color: "#007AFF",
     fontSize: 14,
   },
 });
