@@ -431,7 +431,7 @@ const filterOutAlreadyInteractedUsers = (users, currentUserData) => {
   if (!currentUserData) return users;
 
   // Get arrays of users the current user has already liked or disliked
-  const alreadyLiked = currentUserData.likedUsers || [];
+  const alreadyLiked = currentUserData.likes || [];
   const alreadyDisliked = currentUserData.dislikedUsers || [];
   const alreadyInteracted = [...alreadyLiked, ...alreadyDisliked];
 
