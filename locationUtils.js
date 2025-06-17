@@ -1,7 +1,7 @@
-import * as Location from 'expo-location';
-import { doc, updateDoc, serverTimestamp, GeoPoint } from 'firebase/firestore';
-import { auth, db } from './FirebaseConfig';
-import firebase from 'firebase/compat/app';
+import * as Location from "expo-location";
+import { doc, updateDoc, serverTimestamp, GeoPoint } from "firebase/firestore";
+import { auth, db } from "./FirebaseConfig";
+import firebase from "firebase/compat/app";
 
 // ✅ Add the same testing toggle here
 const TESTING_MODE = true;
@@ -18,17 +18,20 @@ export const updateUserLocation = async () => {
     }
 
     const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      console.log('Location permission not granted');
+    if (status !== "granted") {
+      console.log("Location permission not granted");
       return;
     }
 
     const location = await Location.getCurrentPositionAsync({});
-    const geoPoint = new GeoPoint(location.coords.latitude, location.coords.longitude);
+    const geoPoint = new GeoPoint(
+      location.coords.latitude,
+      location.coords.longitude
+    );
 
-    await updateDoc(doc(db, 'users', user.uid), {
+    await updateDoc(doc(db, "users", user.uid), {
       location: geoPoint,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     });
 
     console.log("Location updated successfully.");

@@ -11,7 +11,7 @@ const firebaseConfig = {
   projectId: "pencil-meets-case",
   storageBucket: "pencil-meets-case.firebasestorage.app",
   messagingSenderId: "453407555017",
-  appId: "1:453407555017:web:56f59a196b45418179fc18"
+  appId: "1:453407555017:web:56f59a196b45418179fc18",
 };
 
 if (!firebase.apps.length) {
