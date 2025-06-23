@@ -725,14 +725,16 @@ export default function HomeScreen({ navigation }) {
       return Alert.alert("Location Required", "Please enable location permissions to use this feature.");
     }
 
+    /*
     const location = {
       coords: {
         latitude: 1.2968,
         longitude: 103.7765
       }
     };
-    
-    //const location = await Location.getCurrentPositionAsync({});
+    */
+
+    const location = await Location.getCurrentPositionAsync({});
     const { latitude, longitude } = location.coords;
     
     console.log("Fetched location:", latitude, longitude);
