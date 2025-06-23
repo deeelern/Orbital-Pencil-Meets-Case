@@ -29,6 +29,8 @@ import {
 } from "firebase/firestore";
 import { updateUserLocation } from "../locationUtils";
 import { handleLike } from "../utils/handleLike";
+import { isInsideNUS } from "../locationUtils";
+import * as Location from "expo-location"; 
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const CARD_WIDTH = screenWidth * 0.9;
@@ -100,6 +102,7 @@ function LikesModal({ visible, onClose, currentUserId }) {
     </View>
   );
 
+
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.likesOverlay}>
@@ -138,7 +141,6 @@ function LikesModal({ visible, onClose, currentUserId }) {
 }
 
 // Individual Swipe Card Component
-// Updated SwipeCard Component with improved touch handling
 function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -716,6 +718,33 @@ export default function HomeScreen({ navigation }) {
   const handleSettings = () =>
     navigation.navigate("Settings", { from: "Home" });
 
+  const handleMeetPress = async () => {
+    console.log("💡 Meet button pressed");
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      return Alert.alert("Location Required", "Please enable location permissions to use this feature.");
+    }
+
+    const location = {
+      coords: {
+        latitude: 1.2968,
+        longitude: 103.7765
+      }
+    };
+    
+    //const location = await Location.getCurrentPositionAsync({});
+    const { latitude, longitude } = location.coords;
+    
+    console.log("Fetched location:", latitude, longitude);
+    console.log("Inside NUS?", isInsideNUS(latitude, longitude));
+    
+    if (!isInsideNUS(latitude, longitude)) {
+      return Alert.alert("Off Campus", "Proximity matching only works when you're on NUS campus.");
+    }
+
+    navigation.navigate("Meet");
+  };
+
   const currentUser = users[currentIndex];
   const nextUser = users[currentIndex + 1];
 
@@ -863,7 +892,7 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabButton}
-          onPress={() => navigation.navigate("Meet")}
+          onPress={handleMeetPress}
         >
           <Ionicons name="heart-outline" size={22} color="#6C5CE7" />
           <Text style={styles.tabText}>Meet!</Text>

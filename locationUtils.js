@@ -3,8 +3,24 @@ import { doc, updateDoc, serverTimestamp, GeoPoint } from "firebase/firestore";
 import { auth, db } from "./FirebaseConfig";
 import firebase from "firebase/compat/app";
 
-// ✅ Add the same testing toggle here
-const TESTING_MODE = true;
+// testing toggle 
+const TESTING_MODE = false;
+
+export const NUS_BOUNDARY = {
+  minLat: 1.2840,
+  maxLat: 1.3100,
+  minLng: 103.7620,
+  maxLng: 103.7925,
+};
+
+export const isInsideNUS = (latitude, longitude) => {
+  return (
+    latitude >= NUS_BOUNDARY.minLat &&
+    latitude <= NUS_BOUNDARY.maxLat &&
+    longitude >= NUS_BOUNDARY.minLng &&
+    longitude <= NUS_BOUNDARY.maxLng
+  );
+};
 
 export const updateUserLocation = async () => {
   try {
