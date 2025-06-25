@@ -4,7 +4,7 @@ import { auth, db } from "./FirebaseConfig";
 import firebase from "firebase/compat/app";
 
 // testing toggle 
-const TESTING_MODE = true;
+const TESTING_MODE = false;
 
 export const NUS_BOUNDARY = {
   minLat: 1.2840,

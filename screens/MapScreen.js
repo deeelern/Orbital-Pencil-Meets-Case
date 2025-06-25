@@ -11,11 +11,12 @@ import {
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { db, auth } from "../FirebaseConfig";
-import { collection, query, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp, where } from "firebase/firestore";
 import ProfileCardModal from "./ProfileCardModal";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { GeoPoint } from "firebase/firestore";
 
 const LATITUDE_DELTA = 0.008;
 const LONGITUDE_DELTA = LATITUDE_DELTA * (400 / 800);
@@ -26,8 +27,16 @@ const NUS_CENTER = {
   longitudeDelta: LONGITUDE_DELTA,
 };
 
+// Define NUS campus boundaries (approximate)
+const NUS_BOUNDS = {
+  minLat: 1.2840,  // Matches locationUtils minLat
+  maxLat: 1.3100,  // Matches locationUtils maxLat
+  minLng: 103.7620, // Matches locationUtils minLng
+  maxLng: 103.7925, // Matches locationUtils maxLng
+};
+
 // ✅ Testing toggle — switch to true for hardcoded NUS location testing
-const TESTING_MODE = true;
+const TESTING_MODE = false;
 
 // Component to show who liked the current user
 function MyLikesModal({ visible, onClose, likes }) {
@@ -153,6 +162,106 @@ export default function MapScreen() {
     // nearbyUsers state updated
   }, [nearbyUsers, mapReady, dataFetched]);
 
+  // Helper function to check if coordinates are within NUS bounds
+  const isWithinNUSBounds = (latitude, longitude) => {
+    return (
+      latitude >= NUS_BOUNDS.minLat &&  // Update to minLat
+      latitude <= NUS_BOUNDS.maxLat &&  // Update to maxLat
+      longitude >= NUS_BOUNDS.minLng && // Update to minLng
+      longitude <= NUS_BOUNDS.maxLng    // Update to maxLng
+    );
+  };
+
+  const fetchNUSUsers = async () => {
+    try {
+      const currentUserId = auth.currentUser?.uid;
+      if (!currentUserId) return;
+
+      const currentUserDoc = await getDoc(doc(db, "users", currentUserId));
+      const currentUserData = currentUserDoc.data();
+
+      console.log("=== FETCHING USERS ===");
+      console.log("Current user:", currentUserData?.firstName, currentUserData?.gender);
+
+      const usersQuery = query(collection(db, "users"));
+      const querySnapshot = await getDocs(usersQuery);
+
+      console.log(`Total users in DB: ${querySnapshot.size}`);
+
+      const users = [];
+      let rejectedCount = 0;
+
+      querySnapshot.forEach((doc) => {
+        const userData = doc.data();
+        const userId = doc.id;
+
+        console.log(`\n--- Checking: ${userData.firstName || 'Unknown'} ---`);
+
+        // Skip current user
+        if (userId === currentUserId) {
+          console.log("❌ Skipped: Current user");
+          return;
+        }
+
+        // Check if user has location data
+        if (!userData.location) {
+          console.log("❌ Rejected: No location data");
+          rejectedCount++;
+          return;
+        }
+        console.log("✅ Has location");
+
+        // Extract latitude and longitude from GeoPoint
+        const lat = userData.location.latitude;
+        const lng = userData.location.longitude;
+
+        // Check if user is within NUS bounds
+        if (!isWithinNUSBounds(lat, lng)) {
+          console.log(`❌ Rejected: Outside bounds (${lat}, ${lng})`);
+          rejectedCount++;
+          return;
+        }
+        console.log("✅ Within NUS bounds");
+
+        // Check if user has required data (photos, etc.)
+        if (!userData.photos || userData.photos.length === 0) {
+          console.log("❌ Rejected: No photos");
+          rejectedCount++;
+          return;
+        }
+        console.log("✅ Has photos");
+
+        // Apply gender preference filtering
+        if (shouldIncludeBasedOnGenderPreference(userData, currentUserData)) {
+          console.log("✅ ACCEPTED: Passes all filters");
+          users.push({
+            id: userId,
+            ...userData,
+          });
+        } else {
+          console.log("❌ Rejected: Gender preference mismatch");
+          console.log(`  My gender: ${currentUserData?.gender}`);
+          console.log(`  My prefs: ${JSON.stringify(currentUserData?.preferences?.gender)}`);
+          console.log(`  Their gender: ${userData.gender}`);
+          console.log(`  Their prefs: ${JSON.stringify(userData.preferences?.gender)}`);
+          rejectedCount++;
+        }
+      });
+
+      console.log(`\n=== RESULTS ===`);
+      console.log(`Accepted: ${users.length}`);
+      console.log(`Rejected: ${rejectedCount}`);
+      console.log(`Found ${users.length} users within NUS campus`);
+
+      setNearbyUsers(users);
+
+    } catch (error) {
+      console.error("Error fetching NUS users:", error);
+      Alert.alert("Error", "Failed to load nearby users");
+    }
+  };
+
+
   const fetchMyPreferences = async () => {
     const currentUserDoc = await getDoc(
       doc(db, "users", auth.currentUser?.uid)
@@ -182,6 +291,14 @@ export default function MapScreen() {
         longitude = loc.coords.longitude;
       }
 
+        if (auth.currentUser?.uid) {
+          await updateDoc(doc(db, "users", auth.currentUser.uid), {
+            location: new GeoPoint(latitude, longitude),
+            lastLocationUpdate: serverTimestamp()
+          });
+        console.log("✅ Saved location to Firebase:", latitude, longitude);
+      }
+
       const newRegion = {
         latitude,
         longitude,
@@ -190,11 +307,10 @@ export default function MapScreen() {
       };
 
       setRegion(newRegion);
-
       await fetchMyPreferences();
 
-      // Fetch users and mark data as fetched
-      await fetchNearbyUsers(latitude, longitude);
+      // Fetch users from NUS
+      await fetchNUSUsers();
       setDataFetched(true);
       setIsLoading(false);
     } catch (err) {
@@ -204,8 +320,8 @@ export default function MapScreen() {
   };
 
   const shouldIncludeBasedOnGenderPreference = (userData, currentUser) => {
-    const myGender = currentUser.gender?.toLowerCase();
-    const myPref = normalizePreference(currentUser.preferences?.gender);
+    const myGender = currentUser?.gender?.toLowerCase();
+    const myPref = normalizePreference(currentUser?.preferences?.gender);
 
     const theirGender = userData.gender?.toLowerCase();
     const theirPref = normalizePreference(userData.preferences?.gender);
@@ -233,94 +349,6 @@ export default function MapScreen() {
       return [val];
     }
     return [];
-  };
-
-  const fetchNearbyUsers = async (lat, lon) => {
-    const currentUserDoc = await getDoc(
-      doc(db, "users", auth.currentUser?.uid)
-    );
-    const currentUser = currentUserDoc.exists() ? currentUserDoc.data() : null;
-
-    try {
-      const q = query(collection(db, "users"));
-      const snapshot = await getDocs(q);
-      let users = [];
-
-      snapshot.forEach((docSnap) => {
-        const userData = docSnap.data();
-
-        // Skip current user
-        if (docSnap.id === auth.currentUser?.uid) {
-          return;
-        }
-
-        // Check location exists
-        if (!userData.location) {
-          return;
-        }
-
-        // Check location sharing
-        if (!userData.settings?.locationSharing) {
-          return;
-        }
-
-        // Check photos
-        if (!userData.photos || userData.photos.length === 0) {
-          return;
-        }
-
-        // Handle different location formats
-        let userLat, userLon;
-
-        if (userData.location._latitude !== undefined) {
-          // GeoPoint format
-          userLat = userData.location._latitude;
-          userLon = userData.location._longitude;
-        } else if (Array.isArray(userData.location)) {
-          // Array format [lat, lon]
-          userLat = userData.location[0];
-          userLon = userData.location[1];
-        } else if (userData.location.latitude !== undefined) {
-          // Object format {latitude, longitude}
-          userLat = userData.location.latitude;
-          userLon = userData.location.longitude;
-        } else {
-          return;
-        }
-
-        const distance = getDistance(lat, lon, userLat, userLon);
-        const preference = userData.preferences?.distanceKm ?? 50;
-
-        if (distance <= preference) {
-          if (!shouldIncludeBasedOnGenderPreference(userData, currentUser))
-            return;
-          users.push({
-            id: docSnap.id,
-            ...userData,
-            distance,
-            userLat,
-            userLon,
-          });
-        }
-      });
-
-      // Force state update
-      setNearbyUsers([...users]);
-    } catch (error) {
-      console.error("Error fetching nearby users:", error);
-    }
-  };
-
-  const getDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(lat1 * (Math.PI / 180)) *
-        Math.cos(lat2 * (Math.PI / 180)) *
-        Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
   const fetchMyLikes = async () => {
@@ -479,12 +507,25 @@ export default function MapScreen() {
             <Text style={styles.matchText}>
               You and {matchedUser?.firstName} liked each other!
             </Text>
-            <TouchableOpacity
-              onPress={() => setMatchModalVisible(false)}
-              style={styles.matchCloseBtn}
-            >
-              <Text style={styles.matchCloseText}>Great!</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setMatchModalVisible(false);
+                  navigation.navigate("Chat", {
+                    userId: matchedUser?.id,
+                    userName: matchedUser?.firstName,
+                  });
+                }}
+                style={styles.matchCloseBtn}
+              >
+                <Text style={styles.matchCloseText}>Chat now!</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setMatchModalVisible(false)}
+                style={[styles.matchCloseBtn, { backgroundColor: "#ccc", marginTop: 10 }]}
+              >
+                <Text style={[styles.matchCloseText, { color: "#333" }]}>Maybe later</Text>
+              </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -606,12 +647,6 @@ const styles = StyleSheet.create({
   },
   likesCloseButton: {
     padding: 5,
-  },
-  loadingText: {
-    textAlign: "center",
-    fontSize: 16,
-    color: "#666",
-    marginTop: 20,
   },
   noLikesContainer: {
     alignItems: "center",
