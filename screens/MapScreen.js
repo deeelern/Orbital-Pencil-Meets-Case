@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -17,6 +17,15 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { GeoPoint } from "firebase/firestore";
+// Import location utilities
+import { 
+  updateUserLocation, 
+  startLocationUpdates, 
+  stopLocationUpdates, 
+  getCurrentLocation, 
+  isInsideNUS,
+  NUS_BOUNDARY 
+} from "../locationUtils";
 
 const LATITUDE_DELTA = 0.008;
 const LONGITUDE_DELTA = LATITUDE_DELTA * (400 / 800);
@@ -27,13 +36,8 @@ const NUS_CENTER = {
   longitudeDelta: LONGITUDE_DELTA,
 };
 
-// Define NUS campus boundaries (approximate)
-const NUS_BOUNDS = {
-  minLat: 1.2840,  // Matches locationUtils minLat
-  maxLat: 1.3100,  // Matches locationUtils maxLat
-  minLng: 103.7620, // Matches locationUtils minLng
-  maxLng: 103.7925, // Matches locationUtils maxLng
-};
+// Use NUS_BOUNDARY from locationUtils for consistency
+const NUS_BOUNDS = NUS_BOUNDARY;
 
 // ✅ Testing toggle — switch to true for hardcoded NUS location testing
 const TESTING_MODE = false;
@@ -138,14 +142,46 @@ export default function MapScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [locationStatus, setLocationStatus] = useState("Getting Location...");
   const navigation = useNavigation();
   const [matchModalVisible, setMatchModalVisible] = useState(false);
   const [matchedUser, setMatchedUser] = useState(null);
+  
+  // Use refs to store interval IDs for cleanup
+  const isMountedRef = useRef(true);
 
   // Initialize on component mount
   useEffect(() => {
     initializeMap();
     fetchMyLikes();
+    
+    // Start location updates using locationUtils
+    const intervalId = startLocationUpdates((newLocation) => {
+      if (isMountedRef.current && newLocation) {
+        console.log("📍 Location updated via callback:", newLocation);
+        setCurrentLocation(newLocation);
+        setLocationStatus("Location Active (NUS)");
+        
+        // Update map region to follow user
+        const newRegion = {
+          latitude: newLocation.latitude,
+          longitude: newLocation.longitude,
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA,
+        };
+        setRegion(newRegion);
+        
+        // Refresh nearby users when location updates
+        fetchNUSUsers();
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      isMountedRef.current = false;
+      stopLocationUpdates();
+    };
   }, []);
 
   // Use useFocusEffect to refresh data when screen comes into focus (but not on first load)
@@ -155,22 +191,35 @@ export default function MapScreen() {
         // Only refresh if we've already loaded data once
         refreshData();
       }
+      
+      // Restart location updates when screen is focused
+      const intervalId = startLocationUpdates((newLocation) => {
+        if (isMountedRef.current && newLocation) {
+          setCurrentLocation(newLocation);
+          setLocationStatus("Location Active (NUS)");
+          
+          const newRegion = {
+            latitude: newLocation.latitude,
+            longitude: newLocation.longitude,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA,
+          };
+          setRegion(newRegion);
+          
+          fetchNUSUsers();
+        }
+      });
+
+      return () => {
+        // Stop location updates when screen loses focus
+        stopLocationUpdates();
+      };
     }, [dataFetched])
   );
 
   useEffect(() => {
     // nearbyUsers state updated
   }, [nearbyUsers, mapReady, dataFetched]);
-
-  // Helper function to check if coordinates are within NUS bounds
-  const isWithinNUSBounds = (latitude, longitude) => {
-    return (
-      latitude >= NUS_BOUNDS.minLat &&  // Update to minLat
-      latitude <= NUS_BOUNDS.maxLat &&  // Update to maxLat
-      longitude >= NUS_BOUNDS.minLng && // Update to minLng
-      longitude <= NUS_BOUNDS.maxLng    // Update to maxLng
-    );
-  };
 
   const fetchNUSUsers = async () => {
     try {
@@ -215,9 +264,9 @@ export default function MapScreen() {
         const lat = userData.location.latitude;
         const lng = userData.location.longitude;
 
-        // Check if user is within NUS bounds
-        if (!isWithinNUSBounds(lat, lng)) {
-          console.log(`❌ Rejected: Outside bounds (${lat}, ${lng})`);
+        // Use the isInsideNUS function from locationUtils for consistency
+        if (!isInsideNUS(lat, lng)) {
+          console.log(`❌ Rejected: Outside NUS bounds (${lat}, ${lng})`);
           rejectedCount++;
           return;
         }
@@ -237,6 +286,8 @@ export default function MapScreen() {
           users.push({
             id: userId,
             ...userData,
+            userLat: lat,
+            userLon: lng,
           });
         } else {
           console.log("❌ Rejected: Gender preference mismatch");
@@ -261,7 +312,6 @@ export default function MapScreen() {
     }
   };
 
-
   const fetchMyPreferences = async () => {
     const currentUserDoc = await getDoc(
       doc(db, "users", auth.currentUser?.uid)
@@ -275,33 +325,33 @@ export default function MapScreen() {
   const initializeMap = async () => {
     try {
       setIsLoading(true);
-      let latitude = NUS_CENTER.latitude;
-      let longitude = NUS_CENTER.longitude;
-
-      if (!TESTING_MODE) {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          Alert.alert("Permission Denied", "Location is needed to access map.");
-          setIsLoading(false);
-          return;
-        }
-
-        const loc = await Location.getCurrentPositionAsync({});
-        latitude = loc.coords.latitude;
-        longitude = loc.coords.longitude;
+      
+      // Use getCurrentLocation from locationUtils
+      const location = await getCurrentLocation();
+      
+      if (!location) {
+        Alert.alert("Permission Denied", "Location is needed to access map.");
+        setIsLoading(false);
+        return;
       }
 
-        if (auth.currentUser?.uid) {
-          await updateDoc(doc(db, "users", auth.currentUser.uid), {
-            location: new GeoPoint(latitude, longitude),
-            lastLocationUpdate: serverTimestamp()
-          });
-        console.log("✅ Saved location to Firebase:", latitude, longitude);
+      // Set current location and status
+      setCurrentLocation({ 
+        latitude: location.latitude, 
+        longitude: location.longitude 
+      });
+
+      if (location.insideNUS) {
+        setLocationStatus("Location Active (NUS)");
+        // Update location in Firebase using locationUtils
+        await updateUserLocation();
+      } else {
+        setLocationStatus("Outside NUS Campus");
       }
 
       const newRegion = {
-        latitude,
-        longitude,
+        latitude: location.latitude,
+        longitude: location.longitude,
         latitudeDelta: LATITUDE_DELTA,
         longitudeDelta: LONGITUDE_DELTA,
       };
@@ -315,6 +365,7 @@ export default function MapScreen() {
       setIsLoading(false);
     } catch (err) {
       console.log("Location error:", err);
+      setLocationStatus("Location Error");
       setIsLoading(false);
     }
   };
@@ -423,6 +474,7 @@ export default function MapScreen() {
         showsMyLocationButton={false}
         onMapReady={handleMapReady}
         initialRegion={NUS_CENTER}
+        followsUserLocation={true}
       >
         {/* Only render markers when both map is ready and data is fetched */}
         {mapReady &&
@@ -470,6 +522,22 @@ export default function MapScreen() {
           </View>
         )}
       </TouchableOpacity>
+
+      {/* Location Status Indicator */}
+      <View style={styles.locationStatusContainer}>
+        <Ionicons 
+          name="location" 
+          size={16} 
+          color={
+            locationStatus.includes("Active") ? "#4CAF50" : 
+            locationStatus.includes("Outside") ? "#FF5722" : 
+            "#FFA726"
+          } 
+        />
+        <Text style={styles.locationStatusText}>
+          {locationStatus}
+        </Text>
+      </View>
 
       {/* Loading indicator */}
       {isLoading && (
@@ -604,6 +672,27 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.6)",
     borderRadius: 25,
     padding: 10,
+  },
+  locationStatusContainer: {
+    position: "absolute",
+    bottom: 30,
+    left: 20,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    padding: 8,
+    borderRadius: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  locationStatusText: {
+    fontSize: 12,
+    marginLeft: 5,
+    color: "#333",
+    fontWeight: "500",
   },
   loadingContainer: {
     position: "absolute",

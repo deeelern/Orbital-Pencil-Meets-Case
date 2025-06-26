@@ -173,11 +173,18 @@ export default function ProfileSetupScreen({ navigation, route }) {
   const [religion, setReligion] = useState(params.religion || null);
   const [otherReligion, setOtherReligion] = useState("");
 
+  // Added smoking and drinking states
+  const [smoking, setSmoking] = useState(params.smoking || null);
+  const [drinking, setDrinking] = useState(params.drinking || null);
+
+  const smokingOptions = ["Not at all", "Open to it"];
+  const drinkingOptions = ["Not at all", "Open to it"];
+
   const isEditing = route?.params?.fromEditProfile === true;
 
   const calculateProgress = () => {
     let filled = 0;
-    const total = 10;
+    const total = 12; // Updated total to include smoking and drinking
 
     if (dob && checkIs18(dob)) filled++;
     if (firstName.trim() && lastName.trim()) filled++;
@@ -188,6 +195,8 @@ export default function ProfileSetupScreen({ navigation, route }) {
     if (heightCm) filled++;
     if (ethnicity) filled++;
     if (religion) filled++;
+    if (smoking) filled++; // Added smoking to progress calculation
+    if (drinking) filled++; // Added drinking to progress calculation
 
     return (filled / total) * 100;
   };
@@ -220,6 +229,10 @@ export default function ProfileSetupScreen({ navigation, route }) {
       );
     if (!religion)
       return Alert.alert("Missing religion", "Please select your religion.");
+    if (!smoking)
+      return Alert.alert("Missing smoking preference", "Please select your smoking preference.");
+    if (!drinking)
+      return Alert.alert("Missing drinking preference", "Please select your drinking preference.");
 
     navigation.navigate("ProfileSetUpPart2", {
       fromEditProfile: isEditing,
@@ -236,6 +249,8 @@ export default function ProfileSetupScreen({ navigation, route }) {
         heightCm,
         ethnicity: ethnicity === "Other" ? otherEthnicity : ethnicity,
         religion: religion === "Other" ? otherReligion : religion,
+        smoking, // Added smoking to profile data
+        drinking, // Added drinking to profile data
       },
       email: route?.params?.email,
       password: route?.params?.password,
@@ -527,6 +542,46 @@ export default function ProfileSetupScreen({ navigation, route }) {
                 />
               </View>
             )}
+          </View>
+
+          {/* Smoking */}
+          <View style={styles.section}>
+            <SectionHeader 
+              title="Do you smoke?" 
+              subtitle="Let others know your smoking preference"
+              icon="flame" 
+            />
+            <View style={styles.optionsContainer}>
+              {smokingOptions.map((option) => (
+                <ModernRadio
+                  key={option}
+                  label={option}
+                  icon={option === "Not at all" ? "close-circle" : "checkmark-circle"}
+                  selected={smoking === option}
+                  onPress={() => setSmoking(option)}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Drinking */}
+          <View style={styles.section}>
+            <SectionHeader 
+              title="Do you drink alcohol?" 
+              subtitle="Let others know your drinking preference"
+              icon="wine" 
+            />
+            <View style={styles.optionsContainer}>
+              {drinkingOptions.map((option) => (
+                <ModernRadio
+                  key={option}
+                  label={option}
+                  icon={option === "Not at all" ? "close-circle" : "checkmark-circle"}
+                  selected={drinking === option}
+                  onPress={() => setDrinking(option)}
+                />
+              ))}
+            </View>
           </View>
         </View>
       </ScrollView>
