@@ -14,18 +14,18 @@ import { db, auth } from "../FirebaseConfig";
 import { collection, query, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp, where } from "firebase/firestore";
 import ProfileCardModal from "./ProfileCardModal";
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from "expo-location";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { GeoPoint } from "firebase/firestore";
-// Import location utilities
 import { 
   updateUserLocation, 
   startLocationUpdates, 
   stopLocationUpdates, 
   getCurrentLocation, 
   isInsideNUS,
-  NUS_BOUNDARY 
-} from "../locationUtils";
+  NUS_BOUNDARY,
+  TESTING_MODE,
+  TEST_COORDINATES
+} from "../utils/locationUtils";
+import { fetchUsersWhoLikedMe } from "../utils/likedMe";
 
 const LATITUDE_DELTA = 0.008;
 const LONGITUDE_DELTA = LATITUDE_DELTA * (400 / 800);
@@ -39,42 +39,29 @@ const NUS_CENTER = {
 // Use NUS_BOUNDARY from locationUtils for consistency
 const NUS_BOUNDS = NUS_BOUNDARY;
 
-// ✅ Testing toggle — switch to true for hardcoded NUS location testing
-const TESTING_MODE = false;
-
 // Component to show who liked the current user
-function MyLikesModal({ visible, onClose, likes }) {
+function MyLikesModal({ visible, onClose }) {
   const [likedUsers, setLikedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchLikedUsers = async () => {
-    if (!likes || likes.length === 0) return;
-
-    setLoading(true);
-    try {
-      const userPromises = likes.map(async (userId) => {
-        const userDoc = await getDoc(doc(db, "users", userId));
-        if (userDoc.exists()) {
-          return { id: userId, ...userDoc.data() };
-        }
-        return null;
-      });
-
-      const users = await Promise.all(userPromises);
-      setLikedUsers(users.filter((u) => u !== null));
-    } catch (error) {
-      console.error("Error fetching users who liked me:", error);
-      Alert.alert("Error", "Failed to load users who liked you");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   React.useEffect(() => {
+    const loadLikedUsers = async () => {
+      setLoading(true);
+      try {
+        const users = await fetchUsersWhoLikedMe();
+        setLikedUsers(users);
+      } catch (error) {
+        console.error("Error fetching users who liked me:", error);
+        Alert.alert("Error", "Failed to load users who liked you");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (visible) {
-      fetchLikedUsers();
+      loadLikedUsers();
     }
-  }, [visible, likes]);
+  }, [visible]);
 
   const renderLikedUser = ({ item }) => (
     <View style={styles.likedUserCard}>
@@ -154,7 +141,11 @@ export default function MapScreen() {
   // Initialize on component mount
   useEffect(() => {
     initializeMap();
-    fetchMyLikes();
+    const loadLikedMe = async () => {
+      const likedUsers = await fetchUsersWhoLikedMe();
+      setMyLikes(likedUsers);
+    };
+    loadLikedMe();
     
     // Start location updates using locationUtils
     const intervalId = startLocationUpdates((newLocation) => {
@@ -252,17 +243,27 @@ export default function MapScreen() {
           return;
         }
 
-        // Check if user has location data
-        if (!userData.location) {
-          console.log("❌ Rejected: No location data");
-          rejectedCount++;
-          return;
+        // ✅ Handle location data with testing mode
+        let lat, lng;
+        
+        if (TESTING_MODE) {
+          // In testing mode, use fake coordinates for ALL users
+          lat = TEST_COORDINATES.latitude;
+          lng = TEST_COORDINATES.longitude;
+          console.log("🧪 Using test coordinates for user");
+        } else {
+          // In production mode, check if user has real location data
+          if (!userData.location) {
+            console.log("❌ Rejected: No location data");
+            rejectedCount++;
+            return;
+          }
+          
+          // Extract latitude and longitude from GeoPoint
+          lat = userData.location.latitude;
+          lng = userData.location.longitude;
+          console.log("✅ Has location");
         }
-        console.log("✅ Has location");
-
-        // Extract latitude and longitude from GeoPoint
-        const lat = userData.location.latitude;
-        const lng = userData.location.longitude;
 
         // Use the isInsideNUS function from locationUtils for consistency
         if (!isInsideNUS(lat, lng)) {
@@ -402,19 +403,6 @@ export default function MapScreen() {
     return [];
   };
 
-  const fetchMyLikes = async () => {
-    try {
-      const myDocRef = doc(db, "users", auth.currentUser?.uid);
-      const myDocSnap = await getDoc(myDocRef);
-      if (myDocSnap.exists()) {
-        const data = myDocSnap.data();
-        setMyLikes(data.likes ?? []);
-      }
-    } catch (error) {
-      console.error("Error fetching likes:", error);
-    }
-  };
-
   const openProfileModal = (user) => {
     setSelectedUser(user);
     setModalVisible(true);
@@ -436,14 +424,15 @@ export default function MapScreen() {
   // Add a refresh function
   const refreshData = async () => {
     await initializeMap();
-    await fetchMyLikes();
+    const likedUsers = await fetchUsersWhoLikedMe();
+    setMyLikes(likedUsers);
   };
 
   // Handle profile card close and refresh likes
   const handleProfileCardClose = async () => {
     setModalVisible(false);
-    // Refresh my likes when closing profile card (in case someone liked me)
-    await fetchMyLikes();
+    const likedUsers = await fetchUsersWhoLikedMe();
+    setMyLikes(likedUsers);
   };
 
   return (
@@ -494,7 +483,7 @@ export default function MapScreen() {
                 key={`${user.id}-${index}`}
                 coordinate={{ latitude: user.userLat, longitude: user.userLon }}
                 onPress={() => openProfileModal(user)}
-                tracksViewChanges={false}
+                tracksViewChanges={true}
               >
                 <View style={styles.markerContainer}>
                   <Image
@@ -559,7 +548,6 @@ export default function MapScreen() {
       <MyLikesModal
         visible={showMyLikes}
         onClose={() => setShowMyLikes(false)}
-        likes={myLikes}
       />
 
       <Modal visible={matchModalVisible} transparent animationType="fade">
@@ -607,13 +595,18 @@ const styles = StyleSheet.create({
   markerContainer: {
     width: 50,
     height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: "#fff",
-    overflow: "hidden",
-    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent", 
   },
-  markerImage: { width: "100%", height: "100%" },
+  markerImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,  
+    borderWidth: 2,
+    borderColor: "#fff",   
+    resizeMode: "cover",   
+  },
   likesCounterContainer: {
     position: "absolute",
     top: 60,

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   Dimensions,
   PanResponder,
@@ -13,6 +12,7 @@ import {
   Alert,
   Modal,
   FlatList,
+  SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,13 +24,10 @@ import {
   getDocs,
   query,
   where,
-  updateDoc,
-  arrayUnion,
 } from "firebase/firestore";
-import { updateUserLocation } from "../locationUtils";
 import { handleLike } from "../utils/handleLike";
-import { isInsideNUS } from "../locationUtils";
-import * as Location from "expo-location"; 
+import { updateUserLocation, getCurrentLocation, isInsideNUS } from "../utils/locationUtils";
+import { fetchUsersWhoLikedMe } from "../utils/likedMe";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const CARD_WIDTH = screenWidth * 0.9;
@@ -41,48 +38,24 @@ function LikesModal({ visible, onClose, currentUserId }) {
   const [likedUsers, setLikedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchUsersWhoLikedMe = async () => {
-    if (!currentUserId) return;
-
-    setLoading(true);
-    try {
-      // Get current user's data to check their likes array
-      const currentUserDoc = await getDoc(doc(db, "users", currentUserId));
-      if (!currentUserDoc.exists()) return;
-
-      const currentUserData = currentUserDoc.data();
-      const userLikes = currentUserData.likes || [];
-
-      if (userLikes.length === 0) {
-        setLikedUsers([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch user data for each user who liked the current user
-      const userPromises = userLikes.map(async (userId) => {
-        const userDoc = await getDoc(doc(db, "users", userId));
-        if (userDoc.exists()) {
-          return { id: userId, ...userDoc.data() };
-        }
-        return null;
-      });
-
-      const users = await Promise.all(userPromises);
-      setLikedUsers(users.filter((u) => u !== null));
-    } catch (error) {
-      console.error("Error fetching users who liked me:", error);
-      Alert.alert("Error", "Failed to load users who liked you");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   React.useEffect(() => {
+    const loadLikedUsers = async () => {
+      setLoading(true);
+      try {
+        const users = await fetchUsersWhoLikedMe(); // ✅ from utils/likedMe.js
+        setLikedUsers(users);
+      } catch (error) {
+        console.error("Error fetching users who liked me:", error);
+        Alert.alert("Error", "Failed to load users who liked you");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (visible) {
-      fetchUsersWhoLikedMe();
+      loadLikedUsers();
     }
-  }, [visible, currentUserId]);
+  }, [visible]);
 
   const renderLikedUser = ({ item }) => (
     <View style={styles.likedUserCard}>
@@ -402,8 +375,8 @@ export default function HomeScreen({ navigation }) {
         setLocationSharing(userData.settings?.locationSharing ?? true);
 
         // Count how many people liked this user
-        const userLikes = userData.likes || [];
-        setLikesCount(userLikes.length);
+        const likedUsers = await fetchUsersWhoLikedMe();
+        setLikesCount(likedUsers.length);
       }
     } catch (error) {
       console.error("Error fetching current user data:", error);
@@ -720,27 +693,20 @@ export default function HomeScreen({ navigation }) {
 
   const handleMeetPress = async () => {
     console.log("💡 Meet button pressed");
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      return Alert.alert("Location Required", "Please enable location permissions to use this feature.");
+    
+    // Use the getCurrentLocation function which handles test mode automatically
+    const locationData = await getCurrentLocation();
+    
+    if (!locationData) {
+      return Alert.alert("Location Error", "Unable to get your location. Please try again.");
     }
-
-    /*
-    const location = {
-      coords: {
-        latitude: 1.2968,
-        longitude: 103.7765
-      }
-    };
-    */
-
-    const location = await Location.getCurrentPositionAsync({});
-    const { latitude, longitude } = location.coords;
+    
+    const { latitude, longitude, insideNUS } = locationData;
     
     console.log("Fetched location:", latitude, longitude);
-    console.log("Inside NUS?", isInsideNUS(latitude, longitude));
+    console.log("Inside NUS?", insideNUS);
     
-    if (!isInsideNUS(latitude, longitude)) {
+    if (!insideNUS) {
       return Alert.alert("Off Campus", "Proximity matching only works when you're on NUS campus.");
     }
 
@@ -751,7 +717,7 @@ export default function HomeScreen({ navigation }) {
   const nextUser = users[currentIndex + 1];
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <LinearGradient
         colors={["#6C5CE7", "#74b9ff"]}
         start={{ x: 0, y: 0 }}
@@ -914,7 +880,7 @@ export default function HomeScreen({ navigation }) {
         onClose={() => setShowLikes(false)}
         currentUserId={auth.currentUser?.uid}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
