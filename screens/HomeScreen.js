@@ -12,7 +12,6 @@ import {
   Alert,
   Modal,
   FlatList,
-  SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -26,12 +25,9 @@ import {
   where,
 } from "firebase/firestore";
 import { handleLike } from "../utils/handleLike";
-import {
-  updateUserLocation,
-  getCurrentLocation,
-  isInsideNUS,
-} from "../utils/locationUtils";
+import { updateUserLocation, getCurrentLocation, isInsideNUS } from "../utils/locationUtils";
 import { fetchUsersWhoLikedMe } from "../utils/likedMe";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const CARD_WIDTH = screenWidth * 0.9;
@@ -77,6 +73,7 @@ function LikesModal({ visible, onClose, currentUserId }) {
       <Text style={styles.blurredName}>{item.firstName?.[0] || "?"}***</Text>
     </View>
   );
+
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -346,6 +343,8 @@ export default function HomeScreen({ navigation }) {
   const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const nextCardOpacity = useRef(new Animated.Value(0.5)).current;
 
+  const insets = useSafeAreaInsets();
+
   const fetchCurrentUserData = async () => {
     try {
       const user = auth.currentUser;
@@ -495,7 +494,7 @@ export default function HomeScreen({ navigation }) {
 
       if (locationY > imageHeight) return false;
 
-      return false;
+      return false; 
     },
 
     onMoveShouldSetPanResponder: (evt, gestureState) => {
@@ -646,48 +645,42 @@ export default function HomeScreen({ navigation }) {
 
   const handleMeetPress = async () => {
     console.log("💡 Meet button pressed");
-
+    
     const locationData = await getCurrentLocation();
-
+    
     if (!locationData) {
-      return Alert.alert(
-        "Location Error",
-        "Unable to get your location. Please try again."
-      );
+      return Alert.alert("Location Error", "Unable to get your location. Please try again.");
     }
-
+    
     const { latitude, longitude, insideNUS } = locationData;
-
+    
     console.log("Fetched location:", latitude, longitude);
     console.log("Inside NUS?", insideNUS);
-
+    
     if (!insideNUS) {
-      return Alert.alert(
-        "Off Campus",
-        "Proximity matching only works when you're on NUS campus."
-      );
+      return Alert.alert("Off Campus", "Proximity matching only works when you're on NUS campus.");
     }
-
     navigation.navigate("Meet");
   };
 
   const currentUser = users[currentIndex];
   const nextUser = users[currentIndex + 1];
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={["#6C5CE7", "#74b9ff"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
+return (
+  <LinearGradient
+    colors={["#6C5CE7", "#74b9ff"]}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}
+    style={{ flex: 1 }}
+  >
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* HEADER */}
+      <View style={styles.header}>
         <TouchableOpacity style={styles.headerButton} disabled>
           <Ionicons name="home-outline" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Discover</Text>
         <View style={styles.headerRight}>
-          {/* Likes Counter */}
           {likesCount > 0 && (
             <TouchableOpacity
               onPress={handleLikesPress}
@@ -704,8 +697,9 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="settings-outline" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
 
+      {/* BODY */}
       <View style={styles.body}>
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -730,7 +724,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         ) : (
           <View style={styles.cardStack}>
-            {/* Next Card (behind) */}
+            {/* Next card */}
             {nextUser && (
               <Animated.View
                 style={[
@@ -743,7 +737,7 @@ export default function HomeScreen({ navigation }) {
                 ]}
               >
                 <View style={styles.imageSection}>
-                  {nextUser.photos && nextUser.photos.length > 0 ? (
+                  {nextUser.photos?.length > 0 ? (
                     <Image
                       source={{ uri: nextUser.photos[0] }}
                       style={styles.cardImage}
@@ -763,7 +757,7 @@ export default function HomeScreen({ navigation }) {
               </Animated.View>
             )}
 
-            {/* Current Card (front) */}
+            {/* Current card */}
             {currentUser && (
               <SwipeCard
                 user={currentUser}
@@ -783,19 +777,16 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* Swipe Instructions */}
         {!loading && currentIndex < users.length && (
           <View style={styles.instructionsContainer}>
             <Text style={styles.instructionText}>
               ← Swipe left to pass • Swipe right to like →
             </Text>
-            <Text style={styles.instructionText}>
-              Tap edges of photo to see more • Scroll content area to read more
-            </Text>
           </View>
         )}
       </View>
 
+      {/* MODALS */}
       <Modal visible={matchModalVisible} transparent animationType="fade">
         <View style={styles.matchOverlay}>
           <View style={styles.matchPopup}>
@@ -808,36 +799,81 @@ export default function HomeScreen({ navigation }) {
         </View>
       </Modal>
 
-      <View style={styles.bottomPanel}>
-        <TouchableOpacity
-          style={styles.tabButton}
-          onPress={() => navigation.navigate("Chat")}
-        >
-          <Ionicons name="chatbubble-outline" size={22} color="#6C5CE7" />
-          <Text style={styles.tabText}>Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabButton} onPress={handleMeetPress}>
-          <Ionicons name="heart-outline" size={22} color="#6C5CE7" />
-          <Text style={styles.tabText}>Meet!</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabButton}
-          onPress={() => navigation.navigate("Me")}
-        >
-          <Ionicons name="person-outline" size={22} color="#6C5CE7" />
-          <Text style={styles.tabText}>Me</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Likes Modal */}
       <LikesModal
         visible={showLikes}
         onClose={() => setShowLikes(false)}
         currentUserId={auth.currentUser?.uid}
       />
+
+      {/* FOOTER */}
+      <View style={[styles.bottomPanel, { paddingBottom: insets.bottom }]}>
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => {
+            navigation.navigate("Chat");
+          }}
+        >
+          <Ionicons
+            name="chatbubble-outline"
+            size={22}
+            color="#6C5CE7"
+          />
+          <Text
+            style={[
+              styles.tabText,
+              { color: "#6C5CE7" }
+            ]}
+          >
+            Chat
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={handleMeetPress}
+        >
+          <Ionicons
+            name="heart-outline"
+            size={22}
+            color ="#6C5CE7"
+          />
+          <Text
+            style={[
+              styles.tabText,
+              { color: "#6C5CE7" }
+            ]}
+          >
+            Meet!
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => {
+            navigation.navigate("Me");
+          }}
+        >
+          <Ionicons
+            name="person-outline"
+            size={22}
+            color ="#6C5CE7" 
+          />
+          <Text
+            style={[
+              styles.tabText,
+              { color: "#6C5CE7" }
+            ]}
+          >
+            Me
+          </Text>
+        </TouchableOpacity>
+      </View>
+
     </SafeAreaView>
-  );
+  </LinearGradient>
+);
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -847,7 +883,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
     elevation: 5,
@@ -934,7 +969,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)", 
   },
   likesContainer: {
     backgroundColor: "#fff",
@@ -1236,7 +1271,7 @@ const styles = StyleSheet.create({
   },
   instructionsContainer: {
     position: "absolute",
-    bottom: 20,
+    bottom: 75,
     left: 0,
     right: 0,
     alignItems: "center",
@@ -1244,7 +1279,7 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     fontSize: 12,
-    color: "#999",
+    color: "#fff",
     textAlign: "center",
     marginVertical: 2,
   },
@@ -1253,28 +1288,31 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 80,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#e1e8ed",
+    backgroundColor: "#ffffff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    paddingHorizontal: 20,
-    elevation: 5,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
+    elevation: 15, 
   },
+
   tabButton: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: 4,
   },
+
   tabText: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#2f3640",
+    fontSize: 12,
     fontWeight: "500",
   },
 });
+
