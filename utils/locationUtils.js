@@ -1,9 +1,9 @@
 import * as Location from "expo-location";
 import { doc, updateDoc, serverTimestamp, GeoPoint } from "firebase/firestore";
-import { auth, db } from "./FirebaseConfig";
+import { auth, db } from "../FirebaseConfig";
 
-// testing toggle 
-const TESTING_MODE = false;
+// Single source of truth for testing mode
+export const TESTING_MODE = true;
 
 // Location update interval in milliseconds (5 minutes = 300,000 ms)
 const LOCATION_UPDATE_INTERVAL = 5 * 60 * 1000;
@@ -13,6 +13,12 @@ export const NUS_BOUNDARY = {
   maxLat: 1.3100,
   minLng: 103.7620,
   maxLng: 103.7925,
+};
+
+// ✅ Test coordinates inside NUS
+export const TEST_COORDINATES = {
+  latitude: 1.2966,
+  longitude: 103.7764,
 };
 
 export const isInsideNUS = (latitude, longitude) => {
@@ -29,10 +35,19 @@ export const updateUserLocation = async () => {
     const user = auth.currentUser;
     if (!user) return;
 
-    // Skip location updates in testing mode
+    // ✅ Return fake location in testing mode
     if (TESTING_MODE) {
-      console.log("🧪 Testing mode: Skipping real location update");
-      return;
+      console.log("🧪 Testing mode: Returning fake NUS location");
+      
+      // Still update Firebase with fake coordinates
+      const geoPoint = new GeoPoint(TEST_COORDINATES.latitude, TEST_COORDINATES.longitude);
+      await updateDoc(doc(db, "users", user.uid), {
+        location: geoPoint,
+        lastLocationUpdate: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      
+      return TEST_COORDINATES;
     }
 
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -111,8 +126,8 @@ export const getCurrentLocation = async () => {
     if (TESTING_MODE) {
       console.log("🧪 Testing mode: Using hardcoded NUS location");
       return {
-        latitude: 1.3,
-        longitude: 103.78,
+        ...TEST_COORDINATES,
+        insideNUS: true,
       };
     }
 
