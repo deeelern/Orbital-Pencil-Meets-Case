@@ -24,7 +24,6 @@ import {
 } from "firebase/firestore";
 import { handleLike } from "../utils/handleLike";
 
-// Likes Modal Component
 function LikesModal({ visible, onClose, user }) {
   const [likedUsers, setLikedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -135,37 +134,26 @@ export default function ProfileCardModal({
   const position = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
 
-  // Improved panResponder with better touch discrimination
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: (evt, gestureState) => {
-      // Don't intercept if user is actively scrolling
       if (isScrolling) return false;
 
-      // Only respond to touches in the image area (top 400px)
       const { locationY } = evt.nativeEvent;
       if (locationY > 400) return false;
 
-      // Require some initial movement to distinguish from taps
       return false;
     },
 
     onMoveShouldSetPanResponder: (evt, gestureState) => {
-      // Don't intercept if user is actively scrolling
       if (isScrolling) return false;
 
-      // Only respond to touches in the image area
       const { locationY } = evt.nativeEvent;
       if (locationY > 400) return false;
 
-      // Require significant horizontal movement compared to vertical
       const { dx, dy } = gestureState;
       const horizontalDistance = Math.abs(dx);
       const verticalDistance = Math.abs(dy);
 
-      // Only respond if:
-      // 1. Horizontal movement is greater than vertical movement
-      // 2. Horizontal movement is significant (> 20px)
-      // 3. The ratio of horizontal to vertical movement is > 1.5
       return (
         horizontalDistance > verticalDistance &&
         horizontalDistance > 20 &&
@@ -181,10 +169,8 @@ export default function ProfileCardModal({
     },
 
     onPanResponderMove: (_, gestureState) => {
-      // Only update x position for horizontal swipes, keep y at 0
       position.setValue({ x: gestureState.dx, y: 0 });
 
-      // Scale effect based on horizontal drag distance only
       const dragDistance = Math.abs(gestureState.dx);
       const scaleValue = Math.max(0.95, 1 - dragDistance / 1000);
       scale.setValue(scaleValue);
@@ -200,7 +186,6 @@ export default function ProfileCardModal({
       } else if (gestureState.dx < -swipeThreshold) {
         handleSwipeLeft();
       } else {
-        // Snap back to center
         Animated.parallel([
           Animated.spring(position, {
             toValue: { x: 0, y: 0 },
@@ -241,7 +226,6 @@ export default function ProfileCardModal({
   };
 
   const handleSwipeLeft = () => {
-    // Animate card off screen to the left
     Animated.parallel([
       Animated.timing(position, {
         toValue: { x: -screenWidth, y: 0 },
@@ -254,14 +238,12 @@ export default function ProfileCardModal({
         useNativeDriver: false,
       }),
     ]).start(() => {
-      // Reset position and close modal
       position.setValue({ x: 0, y: 0 });
       scale.setValue(1);
       onClose();
     });
   };
 
-  // Alternative image navigation using tap zones
   const handleImageTap = (event) => {
     if (!user.photos || user.photos.length <= 1) return;
 
@@ -270,12 +252,10 @@ export default function ProfileCardModal({
     const tapZoneWidth = imageWidth / 3;
 
     if (locationX < tapZoneWidth) {
-      // Left tap - previous image
       const newIndex =
         activeIndex > 0 ? activeIndex - 1 : user.photos.length - 1;
       setActiveIndex(newIndex);
     } else if (locationX > imageWidth - tapZoneWidth) {
-      // Right tap - next image
       const newIndex =
         activeIndex < user.photos.length - 1 ? activeIndex + 1 : 0;
       setActiveIndex(newIndex);
@@ -286,7 +266,6 @@ export default function ProfileCardModal({
     setShowLikes(true);
   };
 
-  // ScrollView event handlers to track scrolling state
   const handleScrollBeginDrag = () => {
     setIsScrolling(true);
   };

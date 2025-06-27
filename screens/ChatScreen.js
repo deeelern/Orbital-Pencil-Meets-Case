@@ -1,4 +1,3 @@
-// /screens/ChatScreen.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -29,7 +28,6 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (currentUserId) {
-      // Set up real-time listener for chats
       const q = query(
         collection(db, "chats"),
         where("members", "array-contains", currentUserId)
@@ -43,7 +41,6 @@ export default function ChatScreen() {
             const otherUserId = data.members.find((id) => id !== currentUserId);
             const otherUserSnap = await getDoc(doc(db, "users", otherUserId));
 
-            // Get unread count for this chat
             const unreadCount = data.unreadCounts?.[currentUserId] || 0;
 
             return {
@@ -157,7 +154,6 @@ export default function ChatScreen() {
       {/* Chat List */}
       <FlatList
         data={chats.sort((a, b) => {
-          // Sort by last message time, most recent first
           if (!a.lastMessageTime && !b.lastMessageTime) return 0;
           if (!a.lastMessageTime) return 1;
           if (!b.lastMessageTime) return -1;
