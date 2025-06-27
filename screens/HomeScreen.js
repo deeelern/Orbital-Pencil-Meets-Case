@@ -26,14 +26,17 @@ import {
   where,
 } from "firebase/firestore";
 import { handleLike } from "../utils/handleLike";
-import { updateUserLocation, getCurrentLocation, isInsideNUS } from "../utils/locationUtils";
+import {
+  updateUserLocation,
+  getCurrentLocation,
+  isInsideNUS,
+} from "../utils/locationUtils";
 import { fetchUsersWhoLikedMe } from "../utils/likedMe";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const CARD_WIDTH = screenWidth * 0.9;
 const CARD_HEIGHT = screenHeight * 0.7;
 
-// Likes Modal Component for HomeScreen
 function LikesModal({ visible, onClose, currentUserId }) {
   const [likedUsers, setLikedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,7 +45,7 @@ function LikesModal({ visible, onClose, currentUserId }) {
     const loadLikedUsers = async () => {
       setLoading(true);
       try {
-        const users = await fetchUsersWhoLikedMe(); // ✅ from utils/likedMe.js
+        const users = await fetchUsersWhoLikedMe();
         setLikedUsers(users);
       } catch (error) {
         console.error("Error fetching users who liked me:", error);
@@ -74,7 +77,6 @@ function LikesModal({ visible, onClose, currentUserId }) {
       <Text style={styles.blurredName}>{item.firstName?.[0] || "?"}***</Text>
     </View>
   );
-
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -113,7 +115,6 @@ function LikesModal({ visible, onClose, currentUserId }) {
   );
 }
 
-// Individual Swipe Card Component
 function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -125,55 +126,41 @@ function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
     const tapZoneWidth = CARD_WIDTH / 3;
 
     if (locationX < tapZoneWidth) {
-      // Left tap - previous image
       const newIndex =
         activeImageIndex > 0 ? activeImageIndex - 1 : user.photos.length - 1;
       setActiveImageIndex(newIndex);
     } else if (locationX > CARD_WIDTH - tapZoneWidth) {
-      // Right tap - next image
       const newIndex =
         activeImageIndex < user.photos.length - 1 ? activeImageIndex + 1 : 0;
       setActiveImageIndex(newIndex);
     }
   };
 
-  // Improved pan handlers with better touch discrimination
   const modifiedPanHandlers = {
     ...panHandlers,
     onStartShouldSetPanResponder: (evt, gestureState) => {
-      // Don't intercept if user is actively scrolling
       if (isScrolling) return false;
 
-      // Calculate the image section height (approximately 60% of card height)
       const imageHeight = CARD_HEIGHT * 0.6;
       const { locationY } = evt.nativeEvent;
 
-      // Only respond to touches in the image area
       if (locationY > imageHeight) return false;
 
-      return false; // Let onMoveShouldSetPanResponder handle the decision
+      return false;
     },
 
     onMoveShouldSetPanResponder: (evt, gestureState) => {
-      // Don't intercept if user is actively scrolling
       if (isScrolling) return false;
 
-      // Calculate the image section height (approximately 60% of card height)
       const imageHeight = CARD_HEIGHT * 0.6;
       const { locationY } = evt.nativeEvent;
 
-      // Only respond to touches in the image area
       if (locationY > imageHeight) return false;
 
-      // Require significant horizontal movement compared to vertical
       const { dx, dy } = gestureState;
       const horizontalDistance = Math.abs(dx);
       const verticalDistance = Math.abs(dy);
 
-      // Only respond if:
-      // 1. Horizontal movement is greater than vertical movement
-      // 2. Horizontal movement is significant (> 20px)
-      // 3. The ratio of horizontal to vertical movement is > 1.5
       return (
         horizontalDistance > verticalDistance &&
         horizontalDistance > 20 &&
@@ -182,7 +169,6 @@ function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
     },
   };
 
-  // Reset active index if it's out of bounds
   const safeActiveIndex = Math.min(
     activeImageIndex,
     user.photos?.length - 1 || 0
@@ -264,7 +250,6 @@ function SwipeCard({ user, onSwipeLeft, onSwipeRight, style, panHandlers }) {
         onMomentumScrollBegin={() => setIsScrolling(true)}
         onMomentumScrollEnd={() => setIsScrolling(false)}
         scrollEventThrottle={16}
-        // Additional props to improve scroll performance and prevent conflicts
         keyboardShouldPersistTaps="handled"
         contentInsetAdjustmentBehavior="automatic"
       >
@@ -356,13 +341,11 @@ export default function HomeScreen({ navigation }) {
   const [likesCount, setLikesCount] = useState(0);
   const [showLikes, setShowLikes] = useState(false);
 
-  // Animation values
   const position = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
   const nextCardScale = useRef(new Animated.Value(0.9)).current;
   const nextCardOpacity = useRef(new Animated.Value(0.5)).current;
 
-  // Fetch current user data and their likes count
   const fetchCurrentUserData = async () => {
     try {
       const user = auth.currentUser;
@@ -374,7 +357,6 @@ export default function HomeScreen({ navigation }) {
         setCurrentUserData(userData);
         setLocationSharing(userData.settings?.locationSharing ?? true);
 
-        // Count how many people liked this user
         const likedUsers = await fetchUsersWhoLikedMe();
         setLikesCount(likedUsers.length);
       }
@@ -403,7 +385,6 @@ export default function HomeScreen({ navigation }) {
 
       if (!theirGender || !theirPref) return false;
 
-      // Mutual gender preference match
       const iMatchTheirPref = theirPref.includes(myGender);
       const theyMatchMyPref = myPreference.includes(theirGender);
 
@@ -429,11 +410,9 @@ export default function HomeScreen({ navigation }) {
     return [];
   };
 
-  // additional filter to remove users you've already interacted with
   const filterOutAlreadyInteractedUsers = (users, currentUserData) => {
     if (!currentUserData) return users;
 
-    // Get arrays of users the current user has already liked or disliked
     const alreadyLiked = currentUserData.likes || [];
     const alreadyDisliked = currentUserData.dislikedUsers || [];
     const alreadyInteracted = [...alreadyLiked, ...alreadyDisliked];
@@ -455,7 +434,6 @@ export default function HomeScreen({ navigation }) {
         currentUserData.preferences?.gender
       );
 
-      // Get all users except current user
       const usersQuery = query(
         collection(db, "users"),
         where("__name__", "!=", currentUser.uid)
@@ -466,7 +444,6 @@ export default function HomeScreen({ navigation }) {
 
       querySnapshot.forEach((doc) => {
         const userData = doc.data();
-        // Only include users with basic profile info
         if (userData.firstName && userData.lastName) {
           fetchedUsers.push({
             id: doc.id,
@@ -477,7 +454,6 @@ export default function HomeScreen({ navigation }) {
 
       console.log("Fetched users from database:", fetchedUsers.length);
 
-      // Get fresh current user data to ensure we have latest preferences
       const currentUserDoc = await getDoc(doc(db, "users", currentUser.uid));
       if (!currentUserDoc.exists()) {
         console.log("Current user document not found");
@@ -491,7 +467,6 @@ export default function HomeScreen({ navigation }) {
         genderPreference: freshCurrentUserData.preferences?.gender,
       });
 
-      // Apply both filters with fresh data
       let filteredUsers = filterUsersByGenderPreference(
         fetchedUsers,
         freshCurrentUserData
@@ -503,7 +478,6 @@ export default function HomeScreen({ navigation }) {
 
       console.log("Final filtered users:", filteredUsers.length);
 
-      // Shuffle the users for random order
       const shuffledUsers = filteredUsers.sort(() => Math.random() - 0.5);
       setUsers(shuffledUsers);
       setLoading(false);
@@ -514,36 +488,26 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Improved pan responder with better touch discrimination
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: (evt, gestureState) => {
-      // Calculate the image section height (approximately 60% of card height)
       const imageHeight = CARD_HEIGHT * 0.6;
       const { locationY } = evt.nativeEvent;
 
-      // Only respond to touches in the image area
       if (locationY > imageHeight) return false;
 
-      return false; // Let onMoveShouldSetPanResponder handle the decision
+      return false;
     },
 
     onMoveShouldSetPanResponder: (evt, gestureState) => {
-      // Calculate the image section height (approximately 60% of card height)
       const imageHeight = CARD_HEIGHT * 0.6;
       const { locationY } = evt.nativeEvent;
 
-      // Only respond to touches in the image area
       if (locationY > imageHeight) return false;
 
-      // Require significant horizontal movement compared to vertical
       const { dx, dy } = gestureState;
       const horizontalDistance = Math.abs(dx);
       const verticalDistance = Math.abs(dy);
 
-      // Only respond if:
-      // 1. Horizontal movement is greater than vertical movement
-      // 2. Horizontal movement is significant (> 20px)
-      // 3. The ratio of horizontal to vertical movement is > 1.5
       return (
         horizontalDistance > verticalDistance &&
         horizontalDistance > 20 &&
@@ -559,15 +523,12 @@ export default function HomeScreen({ navigation }) {
     },
 
     onPanResponderMove: (_, gestureState) => {
-      // Only update x position for horizontal swipes, keep y at 0
       position.setValue({ x: gestureState.dx, y: 0 });
 
-      // Scale effect based on horizontal drag distance only
       const dragDistance = Math.abs(gestureState.dx);
       const scaleValue = Math.max(0.95, 1 - dragDistance / 1000);
       scale.setValue(scaleValue);
 
-      // Show next card effect
       const progress = Math.min(dragDistance / 100, 1);
       nextCardScale.setValue(0.9 + 0.05 * progress);
       nextCardOpacity.setValue(0.5 + 0.3 * progress);
@@ -583,7 +544,6 @@ export default function HomeScreen({ navigation }) {
       } else if (gestureState.dx < -swipeThreshold) {
         handleSwipeLeft();
       } else {
-        // Snap back to center
         Animated.parallel([
           Animated.spring(position, {
             toValue: { x: 0, y: 0 },
@@ -613,7 +573,6 @@ export default function HomeScreen({ navigation }) {
     const swipedUser = users[currentIndex];
     if (!swipedUser) return;
 
-    // Animate card off screen to the right
     Animated.parallel([
       Animated.timing(position, {
         toValue: { x: screenWidth + 100, y: 0 },
@@ -637,7 +596,6 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleSwipeLeft = () => {
-    // Animate card off screen to the left
     Animated.parallel([
       Animated.timing(position, {
         toValue: { x: -screenWidth - 100, y: 0 },
@@ -655,13 +613,11 @@ export default function HomeScreen({ navigation }) {
   };
 
   const moveToNextCard = () => {
-    // Reset animations
     position.setValue({ x: 0, y: 0 });
     scale.setValue(1);
     nextCardScale.setValue(0.9);
     nextCardOpacity.setValue(0.5);
 
-    // Move to next user
     setCurrentIndex((prev) => prev + 1);
   };
 
@@ -669,19 +625,16 @@ export default function HomeScreen({ navigation }) {
     setShowLikes(true);
   };
 
-  // Load user data first, then fetch users
   useEffect(() => {
     fetchCurrentUserData();
   }, []);
 
-  // Fetch users after current user data is loaded
   useEffect(() => {
     if (currentUserData) {
       fetchUsers();
     }
   }, [currentUserData]);
 
-  // Update location if sharing is enabled
   useEffect(() => {
     if (locationSharing) {
       updateUserLocation();
@@ -693,21 +646,26 @@ export default function HomeScreen({ navigation }) {
 
   const handleMeetPress = async () => {
     console.log("💡 Meet button pressed");
-    
-    // Use the getCurrentLocation function which handles test mode automatically
+
     const locationData = await getCurrentLocation();
-    
+
     if (!locationData) {
-      return Alert.alert("Location Error", "Unable to get your location. Please try again.");
+      return Alert.alert(
+        "Location Error",
+        "Unable to get your location. Please try again."
+      );
     }
-    
+
     const { latitude, longitude, insideNUS } = locationData;
-    
+
     console.log("Fetched location:", latitude, longitude);
     console.log("Inside NUS?", insideNUS);
-    
+
     if (!insideNUS) {
-      return Alert.alert("Off Campus", "Proximity matching only works when you're on NUS campus.");
+      return Alert.alert(
+        "Off Campus",
+        "Proximity matching only works when you're on NUS campus."
+      );
     }
 
     navigation.navigate("Meet");
@@ -858,10 +816,7 @@ export default function HomeScreen({ navigation }) {
           <Ionicons name="chatbubble-outline" size={22} color="#6C5CE7" />
           <Text style={styles.tabText}>Chat</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabButton}
-          onPress={handleMeetPress}
-        >
+        <TouchableOpacity style={styles.tabButton} onPress={handleMeetPress}>
           <Ionicons name="heart-outline" size={22} color="#6C5CE7" />
           <Text style={styles.tabText}>Meet!</Text>
         </TouchableOpacity>
@@ -979,7 +934,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)", // Dimmed background
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   likesContainer: {
     backgroundColor: "#fff",

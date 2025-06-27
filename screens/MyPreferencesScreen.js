@@ -1,5 +1,3 @@
-// ./screens/MyPreferencesScreen.js
-
 import React, { useState, useEffect } from "react";
 import {
   ScrollView,
@@ -19,7 +17,6 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
-// Reusable radio row
 function RadioRow({ options, value, onChange }) {
   return (
     <View style={styles.editorContainer}>
@@ -43,7 +40,6 @@ function RadioRow({ options, value, onChange }) {
   );
 }
 
-// Multi-select chips
 function MultiSelectRow({ options, value, onChange, exclusiveOptions = [] }) {
   const currentSelections = Array.isArray(value) ? value : [value];
 
@@ -241,25 +237,23 @@ export default function MyPreferencesScreen({ navigation, route }) {
       }
 
       const userData = {
-        ...profile, // firstName, lastName, gender, etc.
-        prompts, // any prompts you collect
-        preferences, // e.g. { gender: 'female', ageRange: [18,30] }
+        ...profile,
+        prompts,
+        preferences,
         profileCompleted: true,
-        photos: finalPhotos, // array of download URLs
+        photos: finalPhotos,
         settings: {
           notifications: true,
           showOnline: true,
           privateMode: false,
           locationSharing: true,
         },
-        // only include email on brand-new signup
         ...(email && !isEditing ? { email } : {}),
-        // for new users, set createdAt + seenMatches; skip on edit
         ...(isEditing
           ? {}
           : {
               createdAt: serverTimestamp(),
-              seenMatches: [], // initialize seenMatches
+              seenMatches: [],
             }),
       };
 

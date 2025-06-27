@@ -1,3 +1,4 @@
-// CloudinaryConfig.js
-export const UPLOAD_PRESET = 'profile_pictures';
-export const CLOUD_NAME = 'dfqcdjkga';
+import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '@env';
+
+export const CLOUD_NAME = CLOUDINARY_CLOUD_NAME;
+export const UPLOAD_PRESET = CLOUDINARY_UPLOAD_PRESET;

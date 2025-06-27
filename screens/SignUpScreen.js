@@ -1,4 +1,3 @@
-// ./screens/SignUpScreen.js
 import React, { useState } from "react";
 import {
   View,

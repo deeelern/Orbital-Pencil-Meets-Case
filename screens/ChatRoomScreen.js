@@ -48,7 +48,6 @@ export default function ChatRoomScreen() {
   const currentUserId = auth.currentUser?.uid;
 
   useEffect(() => {
-    // Listen for app state changes
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       setAppState(nextAppState);
     });
@@ -64,13 +63,11 @@ export default function ChatRoomScreen() {
       const msgs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setMessages(msgs);
 
-      // Check for new messages and show notification if app is in background
       if (snapshot.docChanges().length > 0) {
         snapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
             const newMessage = { id: change.doc.id, ...change.doc.data() };
 
-            // Only show notification for messages from other users and when app is not active
             if (
               newMessage.senderId !== currentUserId &&
               appState !== "active"
@@ -86,7 +83,6 @@ export default function ChatRoomScreen() {
   }, [chatId, currentUserId, otherUser.firstName, appState]);
 
   useEffect(() => {
-    // Mark messages as read when screen is focused
     const unsubscribe = navigation.addListener("focus", () => {
       markMessagesAsRead();
     });
@@ -95,7 +91,6 @@ export default function ChatRoomScreen() {
   }, [navigation]);
 
   useEffect(() => {
-    // Mark messages as read when app becomes active
     if (appState === "active") {
       markMessagesAsRead();
     }
@@ -109,7 +104,7 @@ export default function ChatRoomScreen() {
           body: messageText,
           data: { chatId, otherUser },
         },
-        trigger: null, // Show immediately
+        trigger: null,
       });
     } catch (error) {
       console.error("Error showing notification:", error);
@@ -118,7 +113,6 @@ export default function ChatRoomScreen() {
 
   const markMessagesAsRead = async () => {
     try {
-      // Reset unread count for current user
       const chatRef = doc(db, "chats", chatId);
       await updateDoc(chatRef, {
         [`unreadCounts.${currentUserId}`]: 0,
@@ -139,7 +133,6 @@ export default function ChatRoomScreen() {
         timestamp: serverTimestamp(),
       });
 
-      // Update chat metadata and increment unread count for other user
       const otherUserId = otherUser.id;
       await updateDoc(doc(db, "chats", chatId), {
         lastMessage: text.trim(),
