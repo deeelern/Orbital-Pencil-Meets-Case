@@ -571,6 +571,7 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 24,
     fontWeight: "bold",
+    color: "black",
     flex: 1,
   },
   likesButton: {
