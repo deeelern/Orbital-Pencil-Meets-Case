@@ -2,11 +2,12 @@
   "expo": {
     "name": "Pencil Meets Case",
     "slug": "test3",
+    "scheme": "pencilmeetscase",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -20,17 +21,26 @@
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
       "package": "com.dickson76.test3",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "FOREGROUND_SERVICE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE"
+      ],
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBtp2eFkV7MYyCZiRCxyiBrKs0nTgyTI-4"
         }
-      }
+      },
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,7 +48,8 @@
     "extra": {
       "eas": {
         "projectId": "dde8e4f2-3406-4527-97ca-a8fa1dad2c8b"
-      }
+      },
+      "googleMapsApiKey": "AIzaSyBtp2eFkV7MYyCZiRCxyiBrKs0nTgyTI-4"
     }
   }
 }

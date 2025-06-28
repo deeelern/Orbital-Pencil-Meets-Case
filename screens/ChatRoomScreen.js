@@ -195,6 +195,7 @@ export default function ChatRoomScreen() {
             value={text}
             onChangeText={setText}
             placeholder="Type a message..."
+            placeholderTextColor="#888"
             style={styles.input}
             multiline
             maxLength={1000}
@@ -262,6 +263,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     marginRight: 10,
     maxHeight: 100,
+    color: "black",
   },
   sendButton: {
     backgroundColor: "#6C5CE7",
