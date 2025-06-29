@@ -865,21 +865,8 @@ Fail
    </td>
   </tr>
   <tr>
-   <td>
-
-
-
-<pre class="prettyprint">Detect mutual match and show modal </pre>
-
-
-
-
-
-<pre class="prettyprint">
-</pre>
-
-
-   </td>
+   <td>Detect mutual match and show modal
+    </td>
    <td>
 <ol>
 
