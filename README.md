@@ -117,14 +117,14 @@ During onboarding, users complete all required fields—age, location, education
 
 ![image5](https://github.com/deeelern/Orbital-Pencil-Meets-Case/blob/master/images_for_readme/image5.png?raw=true)
 
-*Figure 4. Setting up personal details for profile page *
+    *Figure 4. Setting up personal details for profile page*
 
 Each question presents a set of options; users simply tap their choice to respond. This streamlined interaction keeps the process fast and intuitive, ensuring a smooth, user-friendly experience. If any required field or option is left blank, the app displays an inline error message naming the specific item (for example, “Please indicate your gender”) and keeps the user on the same page until they provide the missing information.
 
 
 ![image22](https://github.com/deeelern/Orbital-Pencil-Meets-Case/blob/master/images_for_readme/image22.jpg?raw=true)
 
-*Figure 5. Setting up profile with prompts*
+    *Figure 5. Setting up profile with prompts*
 
 
 
@@ -136,7 +136,7 @@ Users browse a curated list of engaging questions—such as “What’s your fav
 ![image11](https://github.com/deeelern/Orbital-Pencil-Meets-Case/blob/master/images_for_readme/image11.jpg?raw=true)
 
 
-*Figure 6. Photo upload page for profile set up*
+    *Figure 6. Photo upload page for profile set up*
 
 
 
@@ -148,7 +148,7 @@ Users tap the **“+”** icon in any empty frame to open their device gallery a
 ![image23](https://github.com/deeelern/Orbital-Pencil-Meets-Case/blob/master/images_for_readme/image23.jpg?raw=true)
 
 
-*Figure 7. Preferences page to personalise user preferences*
+    *Figure 7. Preferences page to personalise user preferences*
 
 
 
@@ -393,7 +393,7 @@ In order to facilitate software engineering practices, we have leveraged on some
 ![image14](https://github.com/deeelern/Orbital-Pencil-Meets-Case/blob/master/images_for_readme/image14.png?raw=true)
 
 
-    *  Figure 18. Github Issue Tracking*
+    *Figure 18. Github Issue Tracking*
 
 To track development issues and keep our partner informed, we made use of GitHub Issues throughout the project. (Figure 18) While we did not make use of tagging features like bug or enhancement, we found issue logging helpful in recording ongoing problems or feature-related questions. Since we worked in a pair and communicated closely, it was easy to stay updated on the latest development challenges without the need for elaborate categorization. The issue tracker mainly served as a shared space to document problems we encountered individually, which helped the other teammate understand the context and offer timely help if needed. This lightweight issue tracking approach fits well with our collaborative working style.
 
@@ -423,7 +423,7 @@ In line with best practices in software engineering, we ensure that sensitive cr
 
 ![image10](https://github.com/deeelern/Orbital-Pencil-Meets-Case/blob/master/images_for_readme/image10.png?raw=true)
 
-    *Figure 20. *Keys under the “.env” file
+    *Figure 20. Keys under the “.env” file*
 
 
 ## 
