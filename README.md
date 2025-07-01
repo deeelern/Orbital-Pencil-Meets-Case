@@ -420,7 +420,7 @@ After completing work on a branch, we would perform internal testing and a quick
 
 In line with best practices in software engineering, we ensure that sensitive credentials such as API keys are never exposed publicly on platforms like GitHub. To safeguard this information, we store all keys securely in a .env file (Figure 20), as shown below:
 
-
+![image10](https://github.com/deeelern/Orbital-Pencil-Meets-Case/blob/master/images_for_readme/image10.jpg?raw=true)
 
     *Figure 20. Keys under the “.env” file*
 
