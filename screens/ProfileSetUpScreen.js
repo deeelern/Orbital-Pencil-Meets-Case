@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   Dimensions,
+  Modal,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
@@ -308,7 +309,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
                 display="spinner"
                 maximumDate={new Date()}
                 onChange={onDobChange}
-                style={styles.picker}
+                style={styles.pickerModal}
               />
             )}
           </View>
@@ -444,43 +445,53 @@ export default function ProfileSetupScreen({ navigation, route }) {
 
           {/* Height */}
           <View style={styles.section}>
-            <SectionHeader title="Height?" icon="resize" />
+            <SectionHeader title="Height?" icon="resize-outline" />
+
             <TouchableOpacity
               style={styles.modernDateBtn}
-              onPress={() => setShowHeightPicker(!showHeightPicker)}
+              onPress={() => setShowHeightPicker(true)}
             >
               <Ionicons name="resize-outline" size={20} color="#6C5CE7" />
-              <Text style={styles.modernDateText}>{heightCm} cm</Text>
+              <Text style={styles.modernDateText}>
+                {heightCm ? `${heightCm} cm` : "Select height"}
+              </Text>
               <Ionicons name="chevron-down" size={20} color="#74b9ff" />
             </TouchableOpacity>
-            {showHeightPicker && (
-              <View
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 12,
-                  marginTop: 12,
-                }}
+
+            <Modal
+              visible={showHeightPicker}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowHeightPicker(false)}
+            >
+              <TouchableOpacity
+                activeOpacity={1}
+                onPressOut={() => setShowHeightPicker(false)}
+                style={styles.modalOverlay}
               >
-                <Picker
-                  selectedValue={heightCm}
-                  onValueChange={(itemValue) => setHeightCm(itemValue)}
-                  itemStyle={{
-                    height: 200,
-                    fontSize: 20,
-                    color: "#2f3640",
-                  }}
-                  style={{
-                    height: 200,
-                    width: "100%",
-                  }}
-                >
-                  {heightRange.map((cm) => (
-                    <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
-                  ))}
-                </Picker>
-              </View>
-            )}
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Select your height</Text>
+                  <Picker
+                    selectedValue={heightCm}
+                    onValueChange={(val) => setHeightCm(val)}
+                    style={styles.modalPicker}
+                  >
+                    {Array.from({ length: 121 }, (_, i) => i + 120).map((cm) => (
+                      <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
+                    ))}
+                  </Picker>
+                  <TouchableOpacity
+                    onPress={() => setShowHeightPicker(false)}
+                    style={styles.modalDoneButton}
+                  >
+                    <Text style={styles.modalDoneText}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </Modal>
           </View>
+
+
 
           {/* Ethnicity */}
           <View style={styles.section}>
@@ -805,27 +816,10 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
-  picker: {
+  pickerModal: {
     width: "100%",
     height: 150,
     marginTop: 16,
-  },
-  modernPickerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#e1e8ed",
-    paddingHorizontal: 16,
-  },
-  modernPicker: {
-    flex: 1,
-    height: 56,
-  },
-  pickerItem: {
-    fontSize: 16,
-    color: "#2f3640",
   },
   bottomContainer: {
     position: "absolute",
@@ -861,5 +855,46 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     marginRight: 8,
+  },
+
+  pickerModalContent: {
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalOverlay: {
+  flex: 1,
+  justifyContent: "flex-end",
+  backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+    color: "#2f3640",
+  },
+  modalPicker: {
+    width: "100%",
+    height: 180,
+  },
+  modalDoneButton: {
+    marginTop: 10,
+    backgroundColor: "#6C5CE7",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  modalDoneText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
