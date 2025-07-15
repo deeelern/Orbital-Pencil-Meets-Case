@@ -9,11 +9,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   AppState,
+  Image,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { db, auth } from "../FirebaseConfig";
 import {
   collection,
   doc,
+  getDoc,
   addDoc,
   query,
   orderBy,
@@ -22,9 +26,7 @@ import {
   updateDoc,
   increment,
 } from "firebase/firestore";
-import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 
 // Configure notifications
@@ -44,57 +46,97 @@ export default function ChatRoomScreen() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [appState, setAppState] = useState(AppState.currentState);
-  const flatListRef = useRef(null);
+
   const currentUserId = auth.currentUser?.uid;
+  const lastReadAtRef = useRef(0);
+  const unreadCountRef = useRef(0);
+  const snapshotInitialized = useRef(false);
+  const appStateRef = useRef(AppState.currentState);
+  const isScreenActive = useRef(false);
+  const flatListRef = useRef(null);
 
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      setAppState(nextAppState);
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next === "background" && isScreenActive.current) {
+        markMessagesAsRead();
+      }
+      setAppState(next);
+      appStateRef.current = next;
     });
-
-    return () => subscription?.remove();
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {
-    const msgRef = collection(db, "chats", chatId, "messages");
-    const q = query(msgRef, orderBy("timestamp", "asc"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setMessages(msgs);
-
-      if (snapshot.docChanges().length > 0) {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === "added") {
-            const newMessage = { id: change.doc.id, ...change.doc.data() };
-
-            if (
-              newMessage.senderId !== currentUserId &&
-              appState !== "active"
-            ) {
-              showNotification(otherUser.firstName, newMessage.text);
-            }
-          }
-        });
-      }
-    });
-
-    return () => unsubscribe();
-  }, [chatId, currentUserId, otherUser.firstName, appState]);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
+    const focusUnsub = navigation.addListener("focus", () => {
+      isScreenActive.current = true;
       markMessagesAsRead();
     });
-
-    return unsubscribe;
+    const blurUnsub = navigation.addListener("blur", () => {
+      isScreenActive.current = false;
+      markMessagesAsRead();
+    });
+    return () => {
+      focusUnsub();
+      blurUnsub();
+    };
   }, [navigation]);
 
   useEffect(() => {
-    if (appState === "active") {
-      markMessagesAsRead();
-    }
-  }, [appState]);
+    let unsubscribeChat;
+    let unsubscribeMessages;
+    const chatDocRef = doc(db, "chats", chatId);
+
+    (async () => {
+      // Load and subscribe to chat metadata
+      const chatSnap = await getDoc(chatDocRef);
+      const chatData = chatSnap.data() || {};
+      lastReadAtRef.current = chatData.lastReadAt?.toMillis() || 0;
+      unreadCountRef.current = chatData.unreadCounts?.[currentUserId] || 0;
+
+      unsubscribeChat = onSnapshot(chatDocRef, (snap) => {
+        const d = snap.data() || {};
+        unreadCountRef.current = d.unreadCounts?.[currentUserId] || 0;
+        const serverReadAt = d.lastReadAt?.toMillis() || 0;
+        lastReadAtRef.current = Math.max(lastReadAtRef.current, serverReadAt);
+      });
+
+      // Subscribe to message stream
+      const msgRef = collection(db, "chats", chatId, "messages");
+      const q = query(msgRef, orderBy("timestamp", "asc"));
+      unsubscribeMessages = onSnapshot(q, (snapshot) => {
+        setMessages(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+        if (!snapshotInitialized.current) {
+          snapshotInitialized.current = true;
+          return;
+        }
+
+        // Show local notification if appropriate
+        const shouldNotify =
+          !isScreenActive.current &&
+          appStateRef.current !== "active" &&
+          unreadCountRef.current > 0;
+
+        snapshot.docChanges().forEach((change) => {
+          if (change.type !== "added") return;
+          const m = change.doc.data();
+          const t = m.timestamp?.toMillis() || 0;
+          if (
+            m.senderId !== currentUserId &&
+            shouldNotify &&
+            t > lastReadAtRef.current
+          ) {
+            showNotification(otherUser.firstName, m.text);
+          }
+        });
+      });
+    })();
+
+    return () => {
+      unsubscribeMessages?.();
+      unsubscribeChat?.();
+    };
+  }, [chatId, currentUserId, otherUser.firstName]);
 
   const showNotification = async (senderName, messageText) => {
     try {
@@ -115,16 +157,17 @@ export default function ChatRoomScreen() {
     try {
       const chatRef = doc(db, "chats", chatId);
       await updateDoc(chatRef, {
+        lastReadAt: serverTimestamp(),
         [`unreadCounts.${currentUserId}`]: 0,
       });
+      lastReadAtRef.current = Date.now();
     } catch (error) {
       console.error("Error marking messages as read:", error);
     }
   };
 
   const sendMessage = async () => {
-    if (text.trim() === "") return;
-
+    if (!text.trim()) return;
     try {
       const msgRef = collection(db, "chats", chatId, "messages");
       await addDoc(msgRef, {
@@ -132,15 +175,12 @@ export default function ChatRoomScreen() {
         text: text.trim(),
         timestamp: serverTimestamp(),
       });
-
-      const otherUserId = otherUser.id;
       await updateDoc(doc(db, "chats", chatId), {
         lastMessage: text.trim(),
         lastMessageTime: serverTimestamp(),
         lastMessageSenderId: currentUserId,
-        [`unreadCounts.${otherUserId}`]: increment(1),
+        [`unreadCounts.${otherUser.id}`]: increment(1),
       });
-
       setText("");
     } catch (err) {
       console.error("Failed to send message:", err);
@@ -151,9 +191,17 @@ export default function ChatRoomScreen() {
     const isMe = item.senderId === currentUserId;
     return (
       <View
-        style={[styles.bubble, isMe ? styles.myBubble : styles.theirBubble]}
+        style={[
+          styles.bubble,
+          isMe ? styles.myBubble : styles.theirBubble,
+        ]}
       >
-        <Text style={[styles.bubbleText, !isMe && styles.theirBubbleText]}>
+        <Text
+          style={[
+            styles.bubbleText,
+            !isMe && styles.theirBubbleText,
+          ]}
+        >
           {item.text}
         </Text>
       </View>
@@ -165,8 +213,8 @@ export default function ChatRoomScreen() {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={90}
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -174,22 +222,25 @@ export default function ChatRoomScreen() {
           >
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{otherUser.firstName}</Text>
+          <Image
+            source={{ 
+              uri: otherUser?.photos?.[0] || "https://via.placeholder.com/100" 
+            }}
+            style={styles.headerAvatar}
+            defaultSource={{ uri: "https://via.placeholder.com/100" }}
+          />
+          <Text style={styles.headerTitle}>{otherUser?.firstName || "User"}</Text>
         </View>
-
-        {/* Messages */}
         <FlatList
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          contentContainerStyle={{ padding: 10 }}
+          contentContainerStyle={styles.messageList}
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
           }
         />
-
-        {/* Input bar */}
         <View style={styles.inputBar}>
           <TextInput
             value={text}
@@ -212,24 +263,53 @@ export default function ChatRoomScreen() {
 const styles = StyleSheet.create({
   safeAreaContainer: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#F8F9FA",
   },
-  container: { flex: 1, backgroundColor: "#f9f9f9" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F9FA",
+  },
   header: {
     backgroundColor: "#6C5CE7",
-    paddingTop: 50,
+    paddingTop: Platform.OS === "android" ? 20 : 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  backButton: { marginRight: 12 },
-  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  backButton: {
+    marginRight: 12,
+  },
+  headerAvatar: {
+    width: 40,       
+    height: 40,       
+    borderRadius: 20, 
+    marginRight: 12,
+    borderWidth: 2,   
+    borderColor: "#fff",
+    backgroundColor: "hotpink",
+  },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  messageList: {
+    padding: 12,
+  },
   bubble: {
     padding: 10,
-    marginVertical: 4,
-    borderRadius: 15,
-    maxWidth: "70%",
+    marginVertical: 6,
+    borderRadius: 16,
+    maxWidth: "75%",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   myBubble: {
     backgroundColor: "#6C5CE7",
@@ -240,34 +320,38 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   bubbleText: {
+    fontSize: 15,
+    lineHeight: 20,
     color: "#fff",
-    fontSize: 16,
   },
   theirBubbleText: {
     color: "#333",
   },
   inputBar: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    padding: 8,
-    backgroundColor: "#fff",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#FFF",
+    borderTopColor: "#DDD",
     borderTopWidth: 1,
-    borderColor: "#ccc",
   },
   input: {
     flex: 1,
+    fontSize: 16,
+    paddingVertical: 6,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: "#F1F1F1",
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginRight: 10,
     maxHeight: 100,
-    color: "black",
+    color: "#333",
   },
   sendButton: {
+    marginLeft: 8,
     backgroundColor: "#6C5CE7",
-    padding: 10,
     borderRadius: 20,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

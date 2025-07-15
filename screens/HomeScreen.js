@@ -791,7 +791,9 @@ return (
         <View style={styles.matchOverlay}>
           <View style={styles.matchPopup}>
             <Text style={styles.matchText}>🎉 It's a match!</Text>
-            <Text>You and {matchedUser?.firstName} can now chat!</Text>
+            <Text style={styles.matchText}>
+              You and {matchedUser?.firstName} can now chat!
+            </Text>
             <TouchableOpacity onPress={() => setMatchModalVisible(false)}>
               <Text style={styles.closeButton}>Close</Text>
             </TouchableOpacity>
@@ -1232,10 +1234,13 @@ const styles = StyleSheet.create({
     padding: 30,
     alignItems: "center",
     width: "80%",
+    padding: 20,
   },
   matchText: {
     fontSize: 24,
     fontWeight: "bold",
+    color: "#000",   
+    textAlign: "center",
     marginBottom: 10,
   },
   closeButton: {
