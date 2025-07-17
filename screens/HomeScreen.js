@@ -1,3 +1,5 @@
+import firebase from "firebase/compat/app";
+import "firebase/compat/firestore";
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -23,6 +25,8 @@ import {
   getDocs,
   query,
   where,
+  GeoPoint,
+  updateDoc,
 } from "firebase/firestore";
 import { handleLike } from "../utils/handleLike";
 import { updateUserLocation, getCurrentLocation, isInsideNUS } from "../utils/locationUtils";
@@ -651,15 +655,31 @@ export default function HomeScreen({ navigation }) {
     if (!locationData) {
       return Alert.alert("Location Error", "Unable to get your location. Please try again.");
     }
-    
+
     const { latitude, longitude, insideNUS } = locationData;
     
     console.log("Fetched location:", latitude, longitude);
     console.log("Inside NUS?", insideNUS);
+
+    try {
+      await updateDoc(
+        doc(db, "users", auth.currentUser.uid),
+        {
+          location: new GeoPoint(latitude, longitude),
+          lastLocationUpdate: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        }
+      );
+      console.log("✅ Location recorded on Meet tap");
+    } catch (err) {
+      console.error("❌ Failed to record location:", err);
+      // you can still proceed even if this write errors
+    }
     
     if (!insideNUS) {
       return Alert.alert("Off Campus", "Proximity matching only works when you're on NUS campus.");
     }
+
     navigation.navigate("Meet");
   };
 
