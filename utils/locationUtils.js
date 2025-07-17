@@ -2,7 +2,12 @@ import * as Location from "expo-location";
 import { doc, updateDoc, serverTimestamp, GeoPoint } from "firebase/firestore";
 import { auth, db } from "../FirebaseConfig";
 
-export const TESTING_MODE = true;
+export let TESTING_MODE = false;
+
+/** Flip testing mode on/off in code or via a debug menu */
+export function setTestingMode(enabled) {
+  TESTING_MODE = enabled;
+}
 
 const LOCATION_UPDATE_INTERVAL = 5 * 60 * 1000;
 
@@ -15,7 +20,7 @@ export const NUS_BOUNDARY = {
 
 export const TEST_COORDINATES = {
   latitude: 1.2966,
-  longitude: 103.7764,
+  longitude: 103.7765,
 };
 
 export const isInsideNUS = (latitude, longitude) => {
