@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, View, Image, Animated, Alert } from "react-native";
+import { StyleSheet, View, Image, Animated, Alert, AppState } from "react-native";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import { auth } from "./FirebaseConfig";
+import { auth, db } from "./FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
@@ -21,14 +22,12 @@ import MapScreen from "./screens/MapScreen";
 import MeScreen from "./screens/MeScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 
-// Import notification services
 import {
   registerForPushNotificationsAsync,
   setupNotificationListeners,
 } from "./NotificationService";
 import * as Notifications from "expo-notifications";
 
-// Configure how notifications are handled when received
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -56,18 +55,49 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Register for push notifications
     registerForPushNotificationsAsync();
-
-    // Setup notification listeners
     const cleanup = setupNotificationListeners(navigationRef.current);
-
     return cleanup;
+  }, []);
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const userRef = doc(db, "users", user.uid);
+
+    const setOnline = async () => {
+      await setDoc(userRef, { online: true }, { merge: true });
+    };
+
+    const setOffline = async () => {
+      await setDoc(userRef, {
+        online: false,
+        lastSeen: serverTimestamp(),
+      }, { merge: true });
+    };
+
+    setOnline(); 
+
+    const listener = AppState.addEventListener("change", (state) => {
+      if (state === "active") setOnline();
+      else setOffline();
+    });
+
+    return () => {
+      setOffline();
+      listener.remove();
+    };
   }, []);
 
   const handleLogin = async (email, password, navigation) => {
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
+      await setDoc(doc(db, "users", auth.currentUser.uid), {
+        online: true,
+        lastSeen: serverTimestamp(),
+      }, { merge: true });
+
       navigation.replace("Home");
     } catch (err) {
       Alert.alert("Login failed", err.message);
@@ -103,10 +133,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
-        <Stack.Screen
-          name="ProfileSetUpPart2"
-          component={ProfileSetUpPart2Screen}
-        />
+        <Stack.Screen name="ProfileSetUpPart2" component={ProfileSetUpPart2Screen} />
         <Stack.Screen name="PhotoUpload" component={PhotoUploadScreen} />
         <Stack.Screen name="MyPreferences" component={MyPreferencesScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
@@ -132,3 +159,4 @@ const styles = StyleSheet.create({
     height: 200,
   },
 });
+

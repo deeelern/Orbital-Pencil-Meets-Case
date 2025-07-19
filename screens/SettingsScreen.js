@@ -19,6 +19,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { LinearGradient } from "expo-linear-gradient";
+import { signOutUser, deleteUserAccount } from "../utils/authHelpers";
 
 export default function SettingsScreen({ navigation, route }) {
   const [userProfile, setUserProfile] = useState(null);
@@ -184,7 +185,7 @@ export default function SettingsScreen({ navigation, route }) {
                 style: "destructive",
                 onPress: async () => {
                   try {
-                    await auth.signOut();
+                    await signOutUser();
                     navigation.replace("Login");
                   } catch {
                     Alert.alert("Error", "Sign out failed.");
@@ -212,12 +213,14 @@ export default function SettingsScreen({ navigation, route }) {
                 style: "destructive",
                 onPress: async () => {
                   try {
-                    await deleteDoc(doc(db, "users", user.uid));
-                    await user.delete();
+                    await deleteUserAccount();
                     Alert.alert("Deleted", "Account permanently removed.");
                     navigation.replace("Login");
-                  } catch {
-                    Alert.alert("Error", "Failed to delete account.");
+                  } catch (err) {
+                    Alert.alert(
+                      "Error",
+                      err.message || "Failed to delete account."
+                    );
                   }
                 },
               },
