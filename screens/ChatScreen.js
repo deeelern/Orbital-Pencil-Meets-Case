@@ -12,7 +12,6 @@ import {
   collection,
   query,
   where,
-  getDocs,
   doc,
   getDoc,
   onSnapshot,
@@ -23,11 +22,18 @@ import { LinearGradient } from "expo-linear-gradient";
 
 export default function ChatScreen() {
   const [chats, setChats] = useState([]);
+  const [blockedList, setBlockedList] = useState([]);
   const navigation = useNavigation();
   const currentUserId = auth.currentUser?.uid;
 
   useEffect(() => {
-    if (currentUserId) {
+    if (!currentUserId) return;
+
+    const fetchChats = async () => {
+      const userSnap = await getDoc(doc(db, "users", currentUserId));
+      const myBlocked = userSnap.data()?.blocked || [];
+      setBlockedList(myBlocked);
+
       const q = query(
         collection(db, "chats"),
         where("members", "array-contains", currentUserId)
@@ -50,17 +56,26 @@ export default function ChatScreen() {
               lastMessageSenderId: data.lastMessageSenderId || null,
               unreadCount: unreadCount,
               user: otherUserSnap.exists()
-                ? { id: otherUserId, ...otherUserSnap.data() }
+                ? {
+                    id: otherUserId,
+                    ...otherUserSnap.data(),
+                    online: otherUserSnap.data()?.online || false,
+                    lastSeen: otherUserSnap.data()?.lastSeen?.toDate() || null,
+                  }
                 : null,
             };
           })
         );
 
-        setChats(chatData.filter((chat) => chat.user));
+        // ✅ Show all chats (even blocked users)
+        const visibleChats = chatData.filter((chat) => chat.user);
+        setChats(visibleChats);
       });
 
-      return () => unsubscribe();
-    }
+      return unsubscribe;
+    };
+
+    fetchChats();
   }, [currentUserId]);
 
   const formatTime = (date) => {
@@ -74,68 +89,77 @@ export default function ChatScreen() {
     return `${Math.floor(diff / 86400000)}d`;
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.chatItem}
-      onPress={() =>
-        navigation.navigate("ChatRoom", {
-          chatId: item.id,
-          otherUser: item.user,
-        })
-      }
-    >
-      <View style={styles.avatarContainer}>
-        <Image
-          source={{
-            uri: item.user?.photos?.[0] || "https://via.placeholder.com/100",
-          }}
-          style={styles.avatar}
-        />
-        {item.unreadCount > 0 && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadBadgeText}>
-              {item.unreadCount > 99 ? "99+" : item.unreadCount}
-            </Text>
-          </View>
-        )}
-      </View>
+  const renderItem = ({ item }) => {
+    const isBlocked = blockedList.includes(item.user.id);
 
-      <View style={styles.chatInfo}>
-        <View style={styles.chatHeader}>
-          <Text
-            style={[
-              styles.nameText,
-              item.unreadCount > 0 && styles.unreadNameText,
-            ]}
-          >
-            {item.user.firstName}
-          </Text>
-          {item.lastMessageTime && (
-            <Text style={styles.timeText}>
-              {formatTime(item.lastMessageTime)}
-            </Text>
+    return (
+      <TouchableOpacity
+        style={styles.chatItem}
+        onPress={() =>
+          navigation.navigate("ChatRoom", {
+            chatId: item.id,
+            otherUser: item.user,
+          })
+        }
+      >
+        <View style={styles.avatarContainer}>
+          <Image
+            source={{
+              uri: item.user?.photos?.[0] || "https://via.placeholder.com/100",
+            }}
+            style={styles.avatar}
+          />
+          {item.user?.online && <View style={styles.onlineDot} />}
+          {item.unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>
+                {item.unreadCount > 99 ? "99+" : item.unreadCount}
+              </Text>
+            </View>
           )}
         </View>
 
-        <View style={styles.messageRow}>
-          <Text
-            style={[
-              styles.messageText,
-              item.unreadCount > 0 && styles.unreadMessageText,
-            ]}
-            numberOfLines={1}
-          >
-            {item.lastMessage || "Say hi 👋"}
-          </Text>
-          {item.unreadCount > 0 && <View style={styles.unreadDot} />}
+        <View style={styles.chatInfo}>
+          <View style={styles.chatHeader}>
+            <Text
+              style={[
+                styles.nameText,
+                item.unreadCount > 0 && styles.unreadNameText,
+              ]}
+            >
+              {item.user.firstName}
+            </Text>
+            {item.lastMessageTime && (
+              <Text style={styles.timeText}>
+                {formatTime(item.lastMessageTime)}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.messageRow}>
+            <Text
+              style={[
+                styles.messageText,
+                item.unreadCount > 0 && styles.unreadMessageText,
+              ]}
+              numberOfLines={1}
+            >
+              {item.lastMessage || "Say hi 👋"}
+            </Text>
+            {item.unreadCount > 0 && <View style={styles.unreadDot} />}
+          </View>
+
+          {/* ✅ Show a muted label for blocked users */}
+          {isBlocked && (
+            <Text style={styles.blockedText}>You blocked this user</Text>
+          )}
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <LinearGradient
         colors={["#6C5CE7", "#74b9ff"]}
         start={{ x: 0, y: 0 }}
@@ -151,7 +175,6 @@ export default function ChatScreen() {
         <Text style={styles.headerTitle}>Pencil Meets Case</Text>
       </LinearGradient>
 
-      {/* Chat List */}
       <FlatList
         data={chats.sort((a, b) => {
           if (!a.lastMessageTime && !b.lastMessageTime) return 0;
@@ -180,12 +203,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  backButton: {
+  homeButton: {
     marginRight: 10,
-  },
-  backIcon: {
-    fontSize: 22,
-    color: "#fff",
   },
   headerTitle: {
     fontSize: 20,
@@ -276,4 +295,22 @@ const styles = StyleSheet.create({
     color: "#777",
     fontSize: 16,
   },
+  onlineDot: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#4cd137",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  blockedText: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 2,
+    fontStyle: "italic",
+  },
 });
+

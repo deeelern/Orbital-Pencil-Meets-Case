@@ -228,6 +228,15 @@ export default function MyPreferencesScreen({ navigation, route }) {
           password
         );
         finalUid = userCred.user.uid;
+
+        await setDoc(
+          doc(db, "users", finalUid),
+          {
+            online: true,
+            lastSeen: serverTimestamp(),
+          },
+          { merge: true }
+        );
       }
 
       let finalPhotos = photos;
