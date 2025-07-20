@@ -5,100 +5,90 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
-import { auth, db } from "../FirebaseConfig";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { handleSignUp } from "../utils/signUp";
 
 export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const isValidPassword = (pwd) => {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{6,}$/;
-    return regex.test(pwd);
-  };
-
-  const handleSignUp = async () => {
-    if (!email || !password) {
-      return Alert.alert("All fields are required");
-    }
-    if (!isValidPassword(password)) {
-      return Alert.alert(
-        "Invalid Password",
-        "Password must be at least 6 characters and include uppercase, lowercase, number, and special character."
-      );
-    }
-
-    navigation.navigate("ProfileSetup", {
-      email: email.trim(),
-      password: password,
-    });
-  };
+  const onSignUpPress = () => handleSignUp(email, password, navigation);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Create Account</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../assets/logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
 
-      <TextInput
-        placeholder="Email"
-        placeholderTextColor="#888"
-        style={styles.input}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
+        <Text style={styles.title}>Create Account</Text>
 
-      <TextInput
-        placeholder="Password"
-        placeholderTextColor="#888"
-        style={styles.input}
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        <TextInput
+          placeholder="Email"
+          placeholderTextColor="#888"
+          style={styles.input}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      <Text style={styles.passwordNote}>
-        Password must be at least 6 characters and include: uppercase,
-        lowercase, a number, and a special character.
-      </Text>
+        <TextInput
+          placeholder="Password"
+          placeholderTextColor="#888"
+          style={styles.input}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <TouchableOpacity
-        style={[
-          styles.button,
-          !(email && password && isValidPassword(password)) &&
-            styles.buttonDisabled,
-        ]}
-        activeOpacity={0.8}
-        onPress={handleSignUp}
-        disabled={!(email && password && isValidPassword(password))}
-      >
-        <Text style={styles.buttonText}>Sign Up</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.signupButton} onPress={onSignUpPress}>
+          <Text style={styles.signupButtonText}>Sign Up</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.linkContainer}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.linkText}>Already have an account? Log In</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          style={styles.loginRedirectContainer}
+          onPress={() => navigation.navigate("Login")}
+        >
+          <Text style={styles.loginRedirectText}>
+            Already have an account? Log In
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
     justifyContent: "center",
     backgroundColor: "#fff",
   },
-  heading: {
-    fontSize: 28,
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+  },
+  title: {
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 24,
+    marginBottom: 20,
     textAlign: "center",
     color: "black",
   },
@@ -112,32 +102,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "black",
   },
-  passwordNote: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 8,
-  },
-  button: {
+  signupButton: {
     backgroundColor: "#000",
     height: 50,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 16,
+    marginTop: 10,
   },
-  buttonDisabled: {
-    backgroundColor: "#aaa",
-  },
-  buttonText: {
+  signupButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
-  linkContainer: {
+  loginRedirectContainer: {
+    marginTop: 24,
     alignItems: "center",
   },
-  linkText: {
+  loginRedirectText: {
     color: "#007AFF",
     fontSize: 14,
   },
 });
+

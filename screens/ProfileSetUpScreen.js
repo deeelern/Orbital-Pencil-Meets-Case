@@ -17,6 +17,7 @@ import { auth, db } from "../FirebaseConfig";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { checkIs18 } from "../utils/ageUtils";
 
 const { width } = Dimensions.get("window");
 
@@ -109,13 +110,6 @@ export default function ProfileSetupScreen({ navigation, route }) {
   const onDobChange = (e, d) => {
     setShowDobPicker(Platform.OS === "ios");
     if (d) setDob(d);
-  };
-  const checkIs18 = (d) => {
-    const today = new Date();
-    let age = today.getFullYear() - d.getFullYear();
-    const m = today.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
-    return age >= 18;
   };
 
   const [firstName, setFirstName] = useState(params.firstName || "");

@@ -673,7 +673,6 @@ export default function HomeScreen({ navigation }) {
       console.log("✅ Location recorded on Meet tap");
     } catch (err) {
       console.error("❌ Failed to record location:", err);
-      // you can still proceed even if this write errors
     }
     
     if (!insideNUS) {

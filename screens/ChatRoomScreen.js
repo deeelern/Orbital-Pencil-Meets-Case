@@ -31,6 +31,7 @@ import {
 } from "firebase/firestore";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
+import { formatLastSeen } from "../utils/lastSeenUtils";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -171,15 +172,6 @@ export default function ChatRoomScreen() {
       unsubscribeChat?.();
     };
   }, [chatId, currentUserId, otherUser.firstName]);
-
-  const formatLastSeen = (date) => {
-    const now = new Date();
-    const diff = Math.floor((now - date) / 60000);
-    if (diff < 1) return "just now";
-    if (diff < 60) return `${diff}m ago`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-    return `${Math.floor(diff / 1440)}d ago`;
-  };
 
   const showNotification = async (senderName, messageText) => {
     try {

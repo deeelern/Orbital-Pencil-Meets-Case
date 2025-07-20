@@ -16,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { auth, db } from "../FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { useFocusEffect } from "@react-navigation/native";
+import { calculateAge } from "../utils/ageUtils";
 
 const { width } = Dimensions.get("window");
 const PHOTO_WIDTH = (width - 40) / 3;
@@ -52,17 +53,6 @@ export default function MeScreen({ navigation }) {
       fetchUserProfile();
     }, [])
   );
-
-  const calculateAge = (dob) => {
-    if (!dob) return null;
-    let birthDate = dob.toDate ? dob.toDate() : new Date(dob);
-    if (isNaN(birthDate.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-    return age;
-  };
 
   const handleEditProfile = () => {
     if (!userProfile) return;
