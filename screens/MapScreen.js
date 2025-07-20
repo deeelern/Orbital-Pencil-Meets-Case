@@ -36,10 +36,8 @@ const NUS_CENTER = {
   longitudeDelta: LONGITUDE_DELTA,
 };
 
-// Use NUS_BOUNDARY from locationUtils for consistency
 const NUS_BOUNDS = NUS_BOUNDARY;
 
-// Component to show who liked the current user
 function MyLikesModal({ visible, onClose }) {
   const [likedUsers, setLikedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -135,10 +133,8 @@ export default function MapScreen() {
   const [matchModalVisible, setMatchModalVisible] = useState(false);
   const [matchedUser, setMatchedUser] = useState(null);
   
-  // Use refs to store interval IDs for cleanup
   const isMountedRef = useRef(true);
 
-  // Initialize on component mount
   useEffect(() => {
     initializeMap();
     const loadLikedMe = async () => {
@@ -147,14 +143,12 @@ export default function MapScreen() {
     };
     loadLikedMe();
     
-    // Start location updates using locationUtils
     const intervalId = startLocationUpdates((newLocation) => {
       if (isMountedRef.current && newLocation) {
         console.log("📍 Location updated via callback:", newLocation);
         setCurrentLocation(newLocation);
         setLocationStatus("Location Active (NUS)");
         
-        // Update map region to follow user
         const newRegion = {
           latitude: newLocation.latitude,
           longitude: newLocation.longitude,
@@ -163,27 +157,22 @@ export default function MapScreen() {
         };
         setRegion(newRegion);
         
-        // Refresh nearby users when location updates
         fetchNUSUsers();
       }
     });
 
-    // Cleanup function
     return () => {
       isMountedRef.current = false;
       stopLocationUpdates();
     };
   }, []);
 
-  // Use useFocusEffect to refresh data when screen comes into focus (but not on first load)
   useFocusEffect(
     useCallback(() => {
       if (dataFetched) {
-        // Only refresh if we've already loaded data once
         refreshData();
       }
       
-      // Restart location updates when screen is focused
       const intervalId = startLocationUpdates((newLocation) => {
         if (isMountedRef.current && newLocation) {
           setCurrentLocation(newLocation);
@@ -202,14 +191,12 @@ export default function MapScreen() {
       });
 
       return () => {
-        // Stop location updates when screen loses focus
         stopLocationUpdates();
       };
     }, [dataFetched])
   );
 
   useEffect(() => {
-    // nearbyUsers state updated
   }, [nearbyUsers, mapReady, dataFetched]);
 
   const fetchNUSUsers = async () => {
@@ -243,29 +230,24 @@ export default function MapScreen() {
           return;
         }
 
-        // ✅ Handle location data with testing mode
         let lat, lng;
         
         if (TESTING_MODE) {
-          // In testing mode, use fake coordinates for ALL users
           lat = TEST_COORDINATES.latitude;
           lng = TEST_COORDINATES.longitude;
           console.log("🧪 Using test coordinates for user");
         } else {
-          // In production mode, check if user has real location data
           if (!userData.location) {
             console.log("❌ Rejected: No location data");
             rejectedCount++;
             return;
           }
           
-          // Extract latitude and longitude from GeoPoint
           lat = userData.location.latitude;
           lng = userData.location.longitude;
           console.log("✅ Has location");
         }
 
-        // Use the isInsideNUS function from locationUtils for consistency
         if (!isInsideNUS(lat, lng)) {
           console.log(`❌ Rejected: Outside NUS bounds (${lat}, ${lng})`);
           rejectedCount++;
@@ -273,7 +255,6 @@ export default function MapScreen() {
         }
         console.log("✅ Within NUS bounds");
 
-        // Check if user has required data (photos, etc.)
         if (!userData.photos || userData.photos.length === 0) {
           console.log("❌ Rejected: No photos");
           rejectedCount++;
@@ -281,7 +262,6 @@ export default function MapScreen() {
         }
         console.log("✅ Has photos");
 
-        // Apply gender preference filtering
         if (shouldIncludeBasedOnGenderPreference(userData, currentUserData)) {
           console.log("✅ ACCEPTED: Passes all filters");
           users.push({
@@ -327,7 +307,6 @@ export default function MapScreen() {
     try {
       setIsLoading(true);
       
-      // Use getCurrentLocation from locationUtils
       const location = await getCurrentLocation();
       
       if (!location) {
@@ -336,7 +315,6 @@ export default function MapScreen() {
         return;
       }
 
-      // Set current location and status
       setCurrentLocation({ 
         latitude: location.latitude, 
         longitude: location.longitude 
@@ -344,7 +322,6 @@ export default function MapScreen() {
 
       if (location.insideNUS) {
         setLocationStatus("Location Active (NUS)");
-        // Update location in Firebase using locationUtils
         await updateUserLocation();
       } else {
         setLocationStatus("Outside NUS Campus");
@@ -360,7 +337,6 @@ export default function MapScreen() {
       setRegion(newRegion);
       await fetchMyPreferences();
 
-      // Fetch users from NUS
       await fetchNUSUsers();
       setDataFetched(true);
       setIsLoading(false);
@@ -416,19 +392,16 @@ export default function MapScreen() {
     setShowMyLikes(true);
   };
 
-  // Handle map ready event
   const handleMapReady = () => {
     setMapReady(true);
   };
 
-  // Add a refresh function
   const refreshData = async () => {
     await initializeMap();
     const likedUsers = await fetchUsersWhoLikedMe();
     setMyLikes(likedUsers);
   };
 
-  // Handle profile card close and refresh likes
   const handleProfileCardClose = async () => {
     setModalVisible(false);
     const likedUsers = await fetchUsersWhoLikedMe();
@@ -497,7 +470,7 @@ export default function MapScreen() {
           })}
       </MapView>
 
-      {/* ❤️ Likes counter - Now clickable */}
+      {/* Likes counter - Now clickable */}
       <TouchableOpacity
         style={styles.likesCounterContainer}
         onPress={handleLikesPress}
