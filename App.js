@@ -8,6 +8,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { auth, db } from "./FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { setUserOnlineStatus } from "./utils/userUtils";
 
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
@@ -61,42 +62,27 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const userRef = doc(db, "users", user.uid);
-
-    const setOnline = async () => {
-      await setDoc(userRef, { online: true }, { merge: true });
-    };
-
-    const setOffline = async () => {
-      await setDoc(userRef, {
-        online: false,
-        lastSeen: serverTimestamp(),
-      }, { merge: true });
-    };
-
-    setOnline(); 
-
     const listener = AppState.addEventListener("change", (state) => {
-      if (state === "active") setOnline();
-      else setOffline();
+      if (state === "active") {
+        setUserOnlineStatus(true);
+      } else {
+        setUserOnlineStatus(false);
+      }
     });
 
+    setUserOnlineStatus(true);
+
     return () => {
-      setOffline();
+      setUserOnlineStatus(false);
       listener.remove();
     };
   }, []);
 
+
   const handleLogin = async (email, password, navigation) => {
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      await setDoc(doc(db, "users", auth.currentUser.uid), {
-        online: true,
-        lastSeen: serverTimestamp(),
-      }, { merge: true });
+      await setUserOnlineStatus(true);
 
       navigation.replace("Home");
     } catch (err) {

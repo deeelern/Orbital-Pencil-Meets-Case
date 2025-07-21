@@ -109,7 +109,9 @@ export default function ChatScreen() {
             }}
             style={styles.avatar}
           />
-          {item.user?.online && <View style={styles.onlineDot} />}
+          {item.user?.settings?.showOnline && item.user?.online && (
+            <View style={styles.onlineDot} />
+          )}
           {item.unreadCount > 0 && (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadBadgeText}>

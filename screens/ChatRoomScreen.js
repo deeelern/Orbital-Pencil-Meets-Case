@@ -32,6 +32,7 @@ import {
 import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
 import { formatLastSeen } from "../utils/lastSeenUtils";
+import { setUserOnlineStatus } from "../utils/userUtils";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -76,8 +77,9 @@ export default function ChatRoomScreen() {
   }, []);
 
   useEffect(() => {
-    const focusUnsub = navigation.addListener("focus", () => {
+    const focusUnsub = navigation.addListener("focus", async() => {
       isScreenActive.current = true;
+      await setUserOnlineStatus(true);
       markMessagesAsRead();
     });
     const blurUnsub = navigation.addListener("blur", () => {
@@ -94,8 +96,8 @@ export default function ChatRoomScreen() {
     const unsub = onSnapshot(doc(db, "users", otherUser.id), (snap) => {
       const data = snap.data();
       setOtherUserStatus({
-        online: data?.online || false,
-        lastSeen: data?.lastSeen?.toDate() || null,
+        online: data?.settings?.showOnline ? data?.online || false : false,
+        lastSeen: data?.settings?.showOnline ? data?.lastSeen?.toDate() || null : null,
       });
     });
     return () => unsub();
@@ -175,6 +177,14 @@ export default function ChatRoomScreen() {
 
   const showNotification = async (senderName, messageText) => {
     try {
+      const currentUserSnap = await getDoc(doc(db, "users", currentUserId));
+      const notificationsEnabled = currentUserSnap.data()?.settings?.notifications;
+
+      if (notificationsEnabled === false) {
+        console.log("🔕 Notifications are disabled. Skipping push notification.");
+        return;
+      }
+
       await Notifications.scheduleNotificationAsync({
         content: {
           title: senderName,
@@ -187,6 +197,7 @@ export default function ChatRoomScreen() {
       console.error("Error showing notification:", error);
     }
   };
+
 
   const markMessagesAsRead = async () => {
     try {

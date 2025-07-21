@@ -1,8 +1,14 @@
 import * as Location from "expo-location";
-import { doc, updateDoc, serverTimestamp, GeoPoint } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  serverTimestamp,
+  GeoPoint,
+  getDoc
+} from "firebase/firestore";
 import { auth, db } from "../FirebaseConfig";
 
-export let TESTING_MODE = false;
+export let TESTING_MODE = true;
 
 /** Flip testing mode on/off in code or via a debug menu */
 export function setTestingMode(enabled) {
@@ -37,6 +43,16 @@ export const updateUserLocation = async () => {
     const user = auth.currentUser;
     if (!user) return;
 
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    const settings = userSnap.data()?.settings;
+    const shareLocation = settings?.locationSharing; // <- updated here
+
+    if (!shareLocation) {
+      console.log("📍 Location sharing is disabled. Skipping update.");
+      return;
+    }
+
     if (TESTING_MODE) {
       console.log("🧪 Testing mode: Returning fake NUS location");
 
@@ -44,13 +60,17 @@ export const updateUserLocation = async () => {
         TEST_COORDINATES.latitude,
         TEST_COORDINATES.longitude
       );
-      await updateDoc(doc(db, "users", user.uid), {
+      await updateDoc(userRef, {
         location: geoPoint,
         lastLocationUpdate: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
 
-      return TEST_COORDINATES;
+      return {
+        latitude: TEST_COORDINATES.latitude,
+        longitude: TEST_COORDINATES.longitude,
+        insideNUS: true,
+      };
     }
 
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -74,7 +94,7 @@ export const updateUserLocation = async () => {
 
     const geoPoint = new GeoPoint(latitude, longitude);
 
-    await updateDoc(doc(db, "users", user.uid), {
+    await updateDoc(userRef, {
       location: geoPoint,
       lastLocationUpdate: serverTimestamp(),
       updatedAt: serverTimestamp(),
