@@ -649,38 +649,31 @@ export default function HomeScreen({ navigation }) {
 
   const handleMeetPress = async () => {
     console.log("💡 Meet button pressed");
-    
-    const locationData = await getCurrentLocation();
-    
+
+    const locationData = await updateUserLocation();
+
     if (!locationData) {
-      return Alert.alert("Location Error", "Unable to get your location. Please try again.");
+      return Alert.alert(
+        "Location Error",
+        "Unable to get your location. Please check your settings."
+      );
     }
 
     const { latitude, longitude, insideNUS } = locationData;
-    
+
     console.log("Fetched location:", latitude, longitude);
     console.log("Inside NUS?", insideNUS);
 
-    try {
-      await updateDoc(
-        doc(db, "users", auth.currentUser.uid),
-        {
-          location: new GeoPoint(latitude, longitude),
-          lastLocationUpdate: firebase.firestore.FieldValue.serverTimestamp(),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        }
-      );
-      console.log("✅ Location recorded on Meet tap");
-    } catch (err) {
-      console.error("❌ Failed to record location:", err);
-    }
-    
     if (!insideNUS) {
-      return Alert.alert("Off Campus", "Proximity matching only works when you're on NUS campus.");
+      return Alert.alert(
+        "Off Campus",
+        "Proximity matching only works when you're on NUS campus."
+      );
     }
 
     navigation.navigate("Meet");
   };
+
 
   const currentUser = users[currentIndex];
   const nextUser = users[currentIndex + 1];
