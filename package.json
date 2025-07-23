@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest"
   },
   "dependencies": {
     "@firebase/firestore": "^4.7.16",
@@ -46,9 +47,22 @@
     "@testing-library/react-native": "^13.2.0",
     "@types/react": "~19.0.10",
     "firebase-tools": "^14.7.0",
-    "jest": "^30.0.4",
+    "jest": "^30.0.5",
+    "jest-expo": "^53.0.9",
     "react-test-renderer": "^19.0.0",
     "typescript": "~5.8.3"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-native/extend-expect"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|expo(nent)?|@expo(nent)?|expo-font|expo-asset|expo-image-picker|expo-constants|firebase|@firebase|@firebase/util|@firebase/app|@firebase/firestore)"
+    ],
+    "transform": {
+      "^.+\\.(js|ts|tsx|mjs)$": "babel-jest"
+    }
   },
   "private": true,
   "description": "Pencil Meets Case",

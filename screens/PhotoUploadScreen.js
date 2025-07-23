@@ -207,13 +207,15 @@ export default function PhotoUploadScreen({ navigation, route }) {
               activeOpacity={0.9}
               style={styles.photoSlot}
               onPress={() => !item.uri && choosePhotoSource(index)}
+              testID="photo-slot"
             >
               {item.uri ? (
                 <View style={styles.photoContainer}>
-                  <Image source={{ uri: item.uri }} style={styles.photo} />
+                  <Image source={{ uri: item.uri }} style={styles.photo} testID="photo-image"/>
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => removePhoto(index)}
+                    testID={`remove-photo-${index}`}
                   >
                     <Text style={styles.removeButtonText}>×</Text>
                   </TouchableOpacity>
@@ -230,6 +232,7 @@ export default function PhotoUploadScreen({ navigation, route }) {
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity
+        testID="continue-button"
           style={[
             styles.modernSubmitBtn,
             (photos.filter((p) => p.uri).length < 3 || uploading) && {
