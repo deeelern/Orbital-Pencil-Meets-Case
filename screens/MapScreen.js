@@ -429,6 +429,7 @@ export default function MapScreen() {
       </TouchableOpacity>
 
       <MapView
+        testID="map-view"
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         region={region}
@@ -453,6 +454,7 @@ export default function MapScreen() {
 
             return (
               <Marker
+                testID={`marker-${user.uid}`}
                 key={`${user.id}-${index}`}
                 coordinate={{ latitude: user.userLat, longitude: user.userLon }}
                 onPress={() => openProfileModal(user)}
@@ -472,6 +474,7 @@ export default function MapScreen() {
 
       {/* Likes counter - Now clickable */}
       <TouchableOpacity
+        testID="liked-by-counter"
         style={styles.likesCounterContainer}
         onPress={handleLikesPress}
         activeOpacity={0.8}
@@ -486,7 +489,10 @@ export default function MapScreen() {
       </TouchableOpacity>
 
       {/* Location Status Indicator */}
-      <View style={styles.locationStatusContainer}>
+      <View 
+      testID="location-disabled-message"
+      style={styles.locationStatusContainer}
+      >
         <Ionicons 
           name="location" 
           size={16} 
@@ -510,6 +516,7 @@ export default function MapScreen() {
 
       {/* Profile Modal */}
       <ProfileCardModal
+        testID="profile-card"
         visible={modalVisible}
         onClose={handleProfileCardClose}
         user={selectedUser}

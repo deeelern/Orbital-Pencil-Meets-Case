@@ -169,6 +169,7 @@ export default function ChatScreen() {
         style={styles.header}
       >
         <TouchableOpacity
+          testID="home-icon"
           style={styles.homeButton}
           onPress={() => navigation.navigate("Home")}
         >

@@ -326,7 +326,7 @@ export default function ChatRoomScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity onPress={handleMenuPress} style={{ paddingLeft: 8 }}>
+          <TouchableOpacity testID="options-menu" onPress={handleMenuPress} style={{ paddingLeft: 8 }}>
             <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -352,7 +352,7 @@ export default function ChatRoomScreen() {
             multiline
             maxLength={1000}
           />
-          <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+          <TouchableOpacity testID="send-button" onPress={sendMessage} style={styles.sendButton}>
             <Ionicons name="send" size={20} color="#fff" />
           </TouchableOpacity>
         </View>

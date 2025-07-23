@@ -21,9 +21,10 @@ import { checkIs18 } from "../utils/ageUtils";
 
 const { width } = Dimensions.get("window");
 
-function ModernRadio({ label, selected, onPress, icon }) {
+function ModernRadio({ label, selected, onPress, icon, testID }) {
   return (
     <TouchableOpacity
+      testID ={testID}
       style={[
         styles.modernRadioContainer,
         selected && styles.modernRadioSelected,
@@ -298,6 +299,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
             </TouchableOpacity>
             {showDobPicker && (
               <DateTimePicker
+                testID="dobPicker"
                 value={dob}
                 mode="date"
                 display="spinner"
@@ -351,7 +353,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
             <View style={styles.optionsContainer}>
               {[
                 { label: "Male", icon: "man" },
-                { label: "Female", icon: "woman" },
+                { label: "Female", icon: "woman", testID: "genderRadioFemale" },
                 { label: "Other", icon: "transgender" },
               ].map((opt) => (
                 <ModernRadio
@@ -360,6 +362,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
                   icon={opt.icon}
                   selected={myGender === opt.label}
                   onPress={() => setMyGender(opt.label)}
+                  testID={opt.testID}
                 />
               ))}
             </View>
