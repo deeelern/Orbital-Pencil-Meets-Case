@@ -41,9 +41,6 @@ As NUS Computing students, we’ve observed firsthand how challenging it can be 
 
 
 
-<p id="gdcalert2" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image2.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert3">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/image2.png "image_tooltip")
 
 
@@ -96,7 +93,7 @@ For our project, we propose a level of achievement that reflects our ambition to
 <p id="gdcalert3" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image3.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert4">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
-![alt_text](images/image3.jpg "image_tooltip")
+![alt_text](images/image3.png "image_tooltip")
 
 
 Link to Milestone 3 Video: [https://drive.google.com/file/d/13nzDpeUoEdDGKwbjjfQ0_5LfwMLy90vS/view?usp=sharing](https://drive.google.com/file/d/13nzDpeUoEdDGKwbjjfQ0_5LfwMLy90vS/view?usp=sharing)
