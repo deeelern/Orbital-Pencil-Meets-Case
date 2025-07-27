@@ -1587,7 +1587,7 @@ Checking the profile details again should also reflect the new changes
 ## Proposed User Flow
 
 
-## 
+## ![alt_text](images/image42.jpg "image_tooltip")
 
 
 ## Development Plan
