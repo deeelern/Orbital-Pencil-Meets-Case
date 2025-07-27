@@ -90,9 +90,6 @@ For our project, we propose a level of achievement that reflects our ambition to
 
 
 
-<p id="gdcalert3" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image3.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert4">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/image3.png "image_tooltip")
 
 
@@ -113,10 +110,8 @@ Users sign up or log in simply by entering their email address and a strong pass
 
     
 
-<p id="gdcalert4" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image4.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert5">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image4.jpg "image_tooltip")
+![alt_text](images/image4.png "image_tooltip")
 
 
 
@@ -139,10 +134,7 @@ First-time users tap “Don’t have an account? Sign Up”, and are guided stra
 
     
 
-<p id="gdcalert5" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image5.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert6">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image5.jpg "image_tooltip")
+![alt_text](images/image5.png "image_tooltip")
 
 
 
@@ -161,9 +153,6 @@ During onboarding, users complete all required fields—age, location, education
 
 
 
-<p id="gdcalert6" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image6.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert7">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/image6.png "image_tooltip")
 
 
@@ -173,10 +162,7 @@ Each question presents a set of options; users simply tap their choice to respon
 
 
 
-<p id="gdcalert7" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image7.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert8">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image7.jpg "image_tooltip")
+![alt_text](images/image7.png "image_tooltip")
 
 
 *Figure 5. Setting up profile with prompts*
@@ -189,10 +175,8 @@ Users browse a curated list of engaging questions—such as “What’s your fav
 
 
 
-<p id="gdcalert8" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image8.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert9">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image8.jpg "image_tooltip")
+![alt_text](images/image8.png "image_tooltip")
 
 
 *Figure 6. Photo upload page for profile set up*
@@ -205,10 +189,8 @@ Users tap the **“+”** icon in any empty frame to open their device gallery a
 
 
 
-<p id="gdcalert9" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image9.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert10">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image9.jpg "image_tooltip")
+![alt_text](images/image9.png "image_tooltip")
 
 
 *Figure 7. Preferences page to personalise user preferences*
@@ -229,9 +211,6 @@ Users set their ideal match criteria, such as gender, age range, maximum distanc
 Users can revisit their profile at any time to update personal details such as name, bio, or stats, ensuring their information stays current. They can do so by clicking on the “Edit Profile” button shown in the “Your Profile” page. (Figure 8)
 
 
-    
-
-<p id="gdcalert10" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image10.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert11">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image10.png "image_tooltip")
@@ -258,10 +237,8 @@ On the same page, users can adjust their match criteria (gender, age range, dist
 
 ## 
 
-<p id="gdcalert11" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image11.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert12">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image11.jpg "image_tooltip")
+![alt_text](images/image11.png "image_tooltip")
 
 
 *Figure 9. User settings page to edit In-App Settings*
@@ -285,9 +262,6 @@ Users can securely log out of their account with a single tap, returning to the 
 Offering a clear, easy-to-find “Delete Account” option is vital for respecting user autonomy and privacy. (Figure 10) When a user chooses to delete their account, they permanently remove all personal data—from profile details and photos to activity history—ensuring that no residual information remains on our servers. This capability not only builds trust by giving users full control over their data, but it also helps us comply with data-protection regulations and reinforces our commitment to protecting user rights. Before finalising, users must confirm the deletion to prevent accidental loss of their account.
 
 
-                      
-
-<p id="gdcalert12" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image12.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert13">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image12.png "image_tooltip")
@@ -307,8 +281,6 @@ The app would check whether a user’s device is located within the NUS campus b
 
            	                  
 
-<p id="gdcalert13" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image13.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert14">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
 
 ![alt_text](images/image13.png "image_tooltip")
 
@@ -321,8 +293,6 @@ The app would check whether a user’s device is located within the NUS campus b
 
                 
 
-<p id="gdcalert14" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image14.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert15">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
 
 ![alt_text](images/image14.png "image_tooltip")
 
@@ -333,8 +303,6 @@ The app would check whether a user’s device is located within the NUS campus b
 Once on campus, users tap the “Meet!” button to see other active users displayed as pins overlaid on a campus map (Figure 12).  Tapping a pin opens that person’s profile card, where users can review photos, stats, and prompt responses (Figure 13) before swiping right (Like) or left (Pass).
 
 
-
-<p id="gdcalert15" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image15.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert16">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image15.png "image_tooltip")
@@ -363,9 +331,6 @@ After a successful match, users can initiate conversations by tapping on the Cha
 Tapping on a chat entry opens the dedicated conversation interface (Figure 15), where users can exchange messages in real time. The interface features a clean and intuitive layout, including a text input field, emoji keyboard, and a send button styled in Pencil Meets Case’s brand color.
 
 
-                        
-
-<p id="gdcalert16" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image16.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert17">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image16.png "image_tooltip")
@@ -373,9 +338,6 @@ Tapping on a chat entry opens the dedicated conversation interface (Figure 15), 
 
 *Figure 14. Chat Overview Screen*
 
-
-
-<p id="gdcalert17" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image17.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert18">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image17.png "image_tooltip")
@@ -404,9 +366,6 @@ Gestures are quick and ergonomic, allowing one-handed operation.
 
 
 
-<p id="gdcalert18" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image18.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert19">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/image18.png "image_tooltip")
 
 
@@ -424,9 +383,6 @@ When two users both swipe right on each other, a match is created. Both users re
 
 On the same swipe page, a Likes Counter (Figure 17) shows how many people have already liked the user’s profile. Tapping the counter opens a view of those profiles, but images remain blurred until mutual interest is confirmed—maintaining curiosity and some anonymity while keeping users engaged.
 
-
-
-<p id="gdcalert19" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image19.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert20">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image19.png "image_tooltip")
@@ -454,10 +410,7 @@ The online status feature enhances communication by indicating when a user is ac
 
 
 
-<p id="gdcalert20" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image20.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert21">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image20.jpg "image_tooltip")
+![alt_text](images/image20.png "image_tooltip")
 
 
 *Figure 18. Online status*
@@ -473,40 +426,31 @@ Users can block others directly from the 3-dot menu within any chat screen (Figu
 
 
 
-<p id="gdcalert21" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image21.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert22">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image21.jpg "image_tooltip")
+![alt_text](images/image21.png "image_tooltip")
 
 
 *Figure 19. Option to block user*
 
 
 
-<p id="gdcalert22" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image22.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert23">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image22.jpg "image_tooltip")
+![alt_text](images/image22.png "image_tooltip")
 
 
 *Figure 20. Inability to send message and see online status*
 
 
 
-<p id="gdcalert23" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image23.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert24">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image23.jpg "image_tooltip")
+![alt_text](images/image23.png "image_tooltip")
 
 
 *Figure 21. Confirmation message*
 
 
 
-<p id="gdcalert24" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image24.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert25">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image24.jpg "image_tooltip")
+![alt_text](images/image24.png "image_tooltip")
 
 
 *Figure 22. Option to unblock user*
@@ -519,10 +463,7 @@ In the Settings screen, users can manage key privacy controls (Figure 23) relate
 
 
 
-<p id="gdcalert25" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image25.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert26">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image25.jpg "image_tooltip")
+![alt_text](images/image25.png "image_tooltip")
 
 
 *Figure 23. Privacy Controls*
@@ -537,10 +478,7 @@ One persistent issue encountered occurs on the Preferences screen. Several field
 
 
 
-<p id="gdcalert26" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image26.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert27">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image26.jpg "image_tooltip")
+![alt_text](images/image26.png "image_tooltip")
  \
  \
 *Figure 24. Rendering issues*
@@ -596,8 +534,6 @@ In order to facilitate software engineering practices, we have leveraged on some
 
 
 
-<p id="gdcalert27" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image27.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert28">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
 
 ![alt_text](images/image27.png "image_tooltip")
 
@@ -614,9 +550,6 @@ Branching was used to isolate each teammate’s work and prevent accidental over
 
 ### Github Merging
 
-
-
-<p id="gdcalert28" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image28.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert29">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image28.png "image_tooltip")
@@ -636,10 +569,8 @@ In line with best practices in software engineering, we ensure that sensitive cr
 
 
 
-<p id="gdcalert29" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image29.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert30">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image29.jpg "image_tooltip")
+![alt_text](images/image29.png "image_tooltip")
 
 
 *Figure 27. *Keys under the “.env” file
@@ -661,9 +592,6 @@ Link to survey: [https://docs.google.com/forms/d/e/1FAIpQLSfZfOyicY5R2TpwVgxKkfp
 
 
 
-<p id="gdcalert30" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image30.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert31">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/image30.png "image_tooltip")
 
 
@@ -672,8 +600,6 @@ Link to survey: [https://docs.google.com/forms/d/e/1FAIpQLSfZfOyicY5R2TpwVgxKkfp
 Overall, the app has received positive feedback with the ease of use of our different functions. Other than the rendering issue that we have pointed out earlier, our in-app chat can be further improved with new functionalities and features (Figure 28).
 
 
-
-<p id="gdcalert31" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image31.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert32">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image31.png "image_tooltip")
@@ -708,9 +634,6 @@ By isolating and rigorously testing each screen's core functionality (e.g., form
 
 
 
-<p id="gdcalert32" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image32.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert33">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/image32.png "image_tooltip")
  \
 *Figure 30. SignUpScreen.test.js*
@@ -727,8 +650,6 @@ By isolating and rigorously testing each screen's core functionality (e.g., form
     * Navigates to SignUpScreen via the “Don’t have an account?” link
 
 
-
-<p id="gdcalert33" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image33.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert34">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image33.png "image_tooltip")
@@ -754,8 +675,6 @@ By isolating and rigorously testing each screen's core functionality (e.g., form
 
 
 
-<p id="gdcalert34" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image34.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert35">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
 
 ![alt_text](images/image34.png "image_tooltip")
 
@@ -774,8 +693,6 @@ By isolating and rigorously testing each screen's core functionality (e.g., form
     * Navigates to MeScreen if editing
 
 
-
-<p id="gdcalert35" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image35.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert36">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image35.png "image_tooltip")
@@ -796,9 +713,6 @@ By isolating and rigorously testing each screen's core functionality (e.g., form
     * Triggers sign-out confirmation flow
     * Triggers delete account confirmation flow
 
-
-
-<p id="gdcalert36" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image36.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert37">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image36.png "image_tooltip")
@@ -823,8 +737,6 @@ By isolating and rigorously testing each screen's core functionality (e.g., form
 
 ## 
 
-<p id="gdcalert37" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image37.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert38">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
 
 ![alt_text](images/image37.png "image_tooltip")
 
@@ -848,8 +760,6 @@ By isolating and rigorously testing each screen's core functionality (e.g., form
 
 
 ### 
-
-<p id="gdcalert38" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image38.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert39">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image38.png "image_tooltip")
@@ -1821,9 +1731,6 @@ Checking the profile details again should also reflect the new changes
 
 
 
-<p id="gdcalert39" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image39.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert40">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/image39.jpg "image_tooltip")
 
 
@@ -1834,9 +1741,6 @@ Link to Milestone 2 Video: [https://drive.google.com/file/d/10SmTArnnI43EZNyEW6A
 
 
 
-<p id="gdcalert40" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image40.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert41">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/image40.png "image_tooltip")
 
 
@@ -1845,9 +1749,6 @@ Link to Milestone 1 Video: [https://drive.google.com/file/d/1Ak7wjaVuChXjZMgauC_
 
 ## Liftoff Poster and Video
 
-
-
-<p id="gdcalert41" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image41.jpg). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert42">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
 
 ![alt_text](images/image41.jpg "image_tooltip")
