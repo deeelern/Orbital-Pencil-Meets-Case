@@ -64,7 +64,7 @@ describe("MyPreferencesScreen", () => {
       />
     );
 
-    fireEvent.press(getByText("Age Range")); // open picker
+    fireEvent.press(getByText("Age Range"));
     const doneButton = getByText("Done");
     fireEvent.press(doneButton);
 

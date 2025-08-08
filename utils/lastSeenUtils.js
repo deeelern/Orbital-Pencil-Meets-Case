@@ -1,6 +1,6 @@
 export const formatLastSeen = (date) => {
   const now = new Date();
-  const diff = Math.floor((now - date) / 60000); // difference in minutes
+  const diff = Math.floor((now - date) / 60000);
 
   if (diff < 1) return "just now";
   if (diff < 60) return `${diff}m ago`;

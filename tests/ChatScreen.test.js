@@ -1,5 +1,3 @@
-// __tests__/ChatScreen.test.js
-
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import ChatScreen from "../screens/ChatScreen";
@@ -7,7 +5,6 @@ import { useNavigation } from "@react-navigation/native";
 import { getDoc, onSnapshot } from "firebase/firestore";
 import { auth } from "../FirebaseConfig";
 
-// 🔧 Mocks
 jest.mock("@react-navigation/native", () => {
   const actual = jest.requireActual("@react-navigation/native");
   return {

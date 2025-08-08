@@ -1,5 +1,3 @@
-// __tests__/SettingsScreen.test.js
-
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import SettingsScreen from "../screens/SettingsScreen";
@@ -9,7 +7,6 @@ import { auth } from "../FirebaseConfig";
 import { signOutUser, deleteUserAccount } from "../utils/authHelpers";
 import { Alert } from "react-native";
 
-// 🔧 Mocks
 jest.mock("@react-navigation/native", () => {
   const actualNav = jest.requireActual("@react-navigation/native");
   return {
