@@ -1,5 +1,3 @@
-// __tests__/ChatRoomScreen.test.js
-
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import ChatRoomScreen from "../screens/ChatRoomScreen";

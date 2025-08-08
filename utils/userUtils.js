@@ -1,4 +1,3 @@
-// utils/userUtils.js
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../FirebaseConfig";
 
@@ -18,7 +17,6 @@ export const setUserOnlineStatus = async (isOnline) => {
     const showOnline = userSnap.data()?.settings?.showOnline;
 
     if (!showOnline) {
-      // User opted out — always appear offline
       await updateDoc(userRef, {
         online: false,
       });

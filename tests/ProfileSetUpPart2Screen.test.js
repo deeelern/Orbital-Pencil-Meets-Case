@@ -1,5 +1,3 @@
-// tests/ProfileSetUpPart2Screen.test.js
-
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import ProfileSetUpPart2Screen from "../screens/ProfileSetUpPart2Screen"; // adjust path if needed

@@ -10,7 +10,6 @@ import { auth, db } from "../FirebaseConfig";
 
 export let TESTING_MODE = true;
 
-/** Flip testing mode on/off in code or via a debug menu */
 export function setTestingMode(enabled) {
   TESTING_MODE = enabled;
 }
