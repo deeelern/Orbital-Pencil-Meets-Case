@@ -1,5 +1,3 @@
-// __tests__/ChatRoomScreen.test.js
-
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
@@ -25,7 +23,7 @@ jest.mock("../FirebaseConfig", () => ({
 
 jest.mock("firebase/firestore", () => ({
   getDoc: jest.fn(),
-  doc: jest.fn(() => "mockDocRef"), // ✅ return a fake doc ref
+  doc: jest.fn(() => "mockDocRef"),
   updateDoc: jest.fn(),
   addDoc: jest.fn(),
   collection: jest.fn(),
@@ -71,11 +69,11 @@ describe("ChatRoomScreen", () => {
     getDoc
       .mockResolvedValueOnce({
         exists: () => true,
-        data: () => ({ blocked: [] }), // blocked list check
+        data: () => ({ blocked: [] }),
       })
       .mockResolvedValueOnce({
         exists: () => true,
-        data: () => ({ settings: { showOnline: true }, online: true }), // online status
+        data: () => ({ settings: { showOnline: true }, online: true }),
       })
       .mockResolvedValueOnce({
         exists: () => true,
